@@ -18,7 +18,7 @@ while IFS= read -r sha; do
     git log -1 --oneline "$sha"
     missing=1
   fi
-done < <(git rev-list "origin/${base}"..HEAD)
+done < <(git rev-list --no-merges "origin/${base}"..HEAD)
 
 if [[ "$missing" -ne 0 ]]; then
   echo ""
