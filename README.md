@@ -1,24 +1,25 @@
-[![CI](https://github.com/Atlas-Commons/home-assistant-technitiumdns/actions/workflows/ci.yml/badge.svg)](https://github.com/Atlas-Commons/home-assistant-technitiumdns/actions/workflows/ci.yml)
-![GitHub branch check runs](https://img.shields.io/github/check-runs/Atlas-Commons/home-assistant-technitiumdns/main?style=plastic)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/t/Atlas-Commons/home-assistant-technitiumdns?style=plastic)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/Atlas-Commons/home-assistant-technitiumdns?style=plastic)
-![GitHub Release](https://img.shields.io/github/v/release/Atlas-Commons/home-assistant-technitiumdns?display_name=release&style=plastic&label=stable%20Release)
-![GitHub Release](https://img.shields.io/github/v/release/Atlas-Commons/home-assistant-technitiumdns?include_prereleases&display_name=release&style=plastic&label=Beta%20Release)
-[![Discord](https://img.shields.io/discord/1032437213100777502)](https://discord.gg/4HcExnCHg2)
+<div align="center">
 
-Contributions welcome — see [CONTRIBUTING.md](.github/CONTRIBUTING.md). PRs require DCO sign-off (`git commit -s`).
+# TechnitiumDNS for Home Assistant
 
-# technitiumDNS Integration for Home Assistant
+_Custom Home Assistant integration for [Technitium DNS Server](https://technitium.com/dns/) — DNS statistics, ad-blocking control, and DHCP device tracking._
 
-This custom integration allows you to integrate technitiumDNS with Home Assistant, providing sensors for various DNS statistics.
+[![Release][release-shield]][release]
+[![License][license-shield]][license]
+[![HACS Custom][hacs-shield]][hacs]
+[![CI][ci-shield]][ci]
+[![hassfest][hassfest-shield]][hassfest]
+[![Maintenance][maintenance-shield]][maintenance]
+[![Maintainer][maintainer-shield]][maintainer]
+[![Discord][discord-shield]][discord]
+
+</div>
 
 > [!NOTE]
-> **Enjoying this integration?**
->
-> This is an open-source project I maintain in my spare time. If you'd like to show your appreciation and support its development, you can buy me a coffee!
->
-> [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/amateurgod)
-
+> This is a fork maintained by [@foXaCe](https://github.com/foXaCe), based on the upstream
+> [Atlas-Commons/home-assistant-technitiumdns](https://github.com/Atlas-Commons/home-assistant-technitiumdns)
+> project. Contributions welcome — see [CONTRIBUTING.md](.github/CONTRIBUTING.md);
+> PRs require DCO sign-off (`git commit -s`).
 
 ## Installation
 
@@ -27,7 +28,7 @@ This custom integration allows you to integrate technitiumDNS with Home Assistan
 1. **Download the repository:**
    - Clone the repository or download the ZIP file.
     ```bash
-    git clone https://github.com/Atlas-Commons/home-assistant-technitiumdns.git
+    git clone https://github.com/foXaCe/home-assistant-technitiumdns.git
     ```
 2. **Copy to Home Assistant:**
    - Copy the `custom_components` directory into your Home Assistant configuration directory.
@@ -41,7 +42,7 @@ This custom integration allows you to integrate technitiumDNS with Home Assistan
    - Go to HACS in your Home Assistant.
    - Click on "Integrations".
    - Click on the three dots in the upper right corner and select "Custom repositories".
-   - Add the URL to this repository: https://github.com/Atlas-Commons/home-assistant-technitiumdns and select the category "Integration".
+   - Add the URL to this repository: https://github.com/foXaCe/home-assistant-technitiumdns and select the category "Integration".
 
 2. **Install the Integration:**
    - Find `technitiumDNS` in HACS and click "Install".
@@ -154,7 +155,7 @@ Device Trackers (Optional):
 
 - **Device Diagnostic Sensors**: Each tracked device automatically gets dedicated diagnostic sensors:
   - **IP Address Sensor**: Current IP address of the device
-  - **MAC Address Sensor**: Hardware MAC address identifier  
+  - **MAC Address Sensor**: Hardware MAC address identifier
   - **Hostname Sensor**: Device hostname if available from DHCP
   - **Lease Obtained Sensor**: Timestamp when the DHCP lease was first obtained
   - **Lease Expires Sensor**: Timestamp when the current DHCP lease expires
@@ -171,7 +172,7 @@ Device Trackers (Optional):
   - **Problem**: Devices with only background traffic (NTP, updates, telemetry) were incorrectly shown as active
   - **Solution**: Multi-factor scoring analyzes protocol mix, domain diversity, timing patterns, and background traffic ratio
   - **Background Detection**: Automatically identifies automated traffic vs genuine user activity
-  - **Configurable Threshold**: Adjustable sensitivity (10-100 points, default: 55) for different network environments  
+  - **Configurable Threshold**: Adjustable sensitivity (10-100 points, default: 55) for different network environments
   - **Analysis Window**: Configurable time window (15 minutes to 4 hours, default: 2 hours) for activity pattern analysis
   - **Rich Diagnostics**: Detailed scoring breakdown for troubleshooting device activity patterns
   - **Score Categories**: Very Low (10), Low (33), Medium (55), High (76), Very High (100)
@@ -247,9 +248,9 @@ The integration provides these services for advanced control:
 
 1. **technitiumdns.cleanup_devices**: Remove orphaned device tracker entities and sensors
    - `config_entry_id` (optional): Target specific integration instance
-   
+
 2. **technitiumdns.get_dhcp_leases**: Retrieve DHCP lease information programmatically
-   - `config_entry_id` (optional): Target specific integration instance  
+   - `config_entry_id` (optional): Target specific integration instance
    - `include_inactive` (optional): Include expired leases (default: false)
    - `filter_scope` (optional): Filter by specific DHCP scope (e.g., "192.168.1.0/24")
 
@@ -288,3 +289,21 @@ The non-English translations for this integration were generated by ChatGPT and 
 
 - [Technitium DNS Server API Documentation](https://github.com/TechnitiumSoftware/DnsServer/blob/master/APIDOCS.md)
 - [technitiumdns-api Python client (PyPI)](https://pypi.org/project/technitiumdns-api/) — used by this integration for all API calls
+
+<!-- Badge references -->
+[release-shield]: https://img.shields.io/github/v/release/foXaCe/home-assistant-technitiumdns?style=for-the-badge
+[release]: https://github.com/foXaCe/home-assistant-technitiumdns/releases
+[license-shield]: https://img.shields.io/github/license/foXaCe/home-assistant-technitiumdns?style=for-the-badge
+[license]: LICENSE
+[hacs-shield]: https://img.shields.io/badge/HACS-Custom-orange?style=for-the-badge
+[hacs]: https://github.com/hacs/integration
+[ci-shield]: https://img.shields.io/github/actions/workflow/status/foXaCe/home-assistant-technitiumdns/ci.github.yml?branch=main&style=for-the-badge&label=CI
+[ci]: https://github.com/foXaCe/home-assistant-technitiumdns/actions/workflows/ci.github.yml
+[hassfest-shield]: https://img.shields.io/github/actions/workflow/status/foXaCe/home-assistant-technitiumdns/validate-hassfest.github.yml?branch=main&style=for-the-badge&label=hassfest
+[hassfest]: https://github.com/foXaCe/home-assistant-technitiumdns/actions/workflows/validate-hassfest.github.yml
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2026?style=for-the-badge
+[maintenance]: https://github.com/foXaCe/home-assistant-technitiumdns/commits/main
+[maintainer-shield]: https://img.shields.io/badge/maintainer-%40foXaCe-blue?style=for-the-badge
+[maintainer]: https://github.com/foXaCe
+[discord-shield]: https://img.shields.io/discord/1032437213100777502?style=for-the-badge&label=Discord&color=5865F2
+[discord]: https://discord.gg/4HcExnCHg2

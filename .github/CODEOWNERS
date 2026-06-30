@@ -1,2 +1,12 @@
-# Default reviewers for Atlas Commons repositories.
-* @Amateur-God
+# Default owner for everything in this fork.
+* @foXaCe
+
+# Integration code
+/custom_components/technitiumdns/ @foXaCe
+
+# Translations
+/custom_components/technitiumdns/translations/ @foXaCe
+
+# CI / repo configuration
+/.github/ @foXaCe
+/.forgejo/ @foXaCe
