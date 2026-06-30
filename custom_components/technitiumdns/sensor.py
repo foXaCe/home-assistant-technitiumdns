@@ -915,16 +915,3 @@ class DynamicSensorManager:
             self._listener()
             self._listener = None
         _LOGGER.debug("Dynamic sensor manager cleaned up")
-
-    async def async_will_remove_from_hass(self):
-        """Clean up before entity removal."""
-        _LOGGER.debug("Diagnostic sensor %s for device %s being removed",
-                     self._sensor_type, self._device_name)
-        # Let the parent class handle any coordinator cleanup
-        return await super().async_will_remove_from_hass() if hasattr(super(), 'async_will_remove_from_hass') else None
-
-    async def async_added_to_hass(self):
-        """Handle when entity is added to hass."""
-        await super().async_added_to_hass()
-        _LOGGER.debug("Diagnostic sensor %s for device %s added to Home Assistant",
-                     self._sensor_type, self._device_name)

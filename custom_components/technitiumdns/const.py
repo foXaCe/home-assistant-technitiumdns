@@ -33,10 +33,6 @@ AD_BLOCKING_DURATION_OPTIONS = {
 }
 
 # DHCP Device Tracking Options
-CONF_ENABLE_DHCP_TRACKING = "enable_dhcp_tracking"
-CONF_DHCP_UPDATE_INTERVAL = "dhcp_update_interval"
-CONF_DHCP_IP_FILTER_MODE = "dhcp_ip_filter_mode"
-CONF_DHCP_IP_RANGES = "dhcp_ip_ranges"
 
 DHCP_UPDATE_INTERVAL_OPTIONS = [30, 60, 180, 300, 600]  # seconds
 
