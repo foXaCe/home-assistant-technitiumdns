@@ -3,7 +3,16 @@
 
 DOMAIN = "technitiumdns"
 
-DURATION_OPTIONS = ["LastHour", "LastDay", "LastWeek", "LastMonth"]
+# Dashboard statistics time window. The selector / stored value is lowercase
+# (Home Assistant requires selector translation keys to match [a-z0-9-_]+);
+# STATS_DURATION_API maps it to the Technitium API parameter value.
+STATS_DURATION_OPTIONS = ["last_hour", "last_day", "last_week", "last_month"]
+STATS_DURATION_API = {
+    "last_hour": "LastHour",
+    "last_day": "LastDay",
+    "last_week": "LastWeek",
+    "last_month": "LastMonth",
+}
 
 # Statistics sensor refresh interval (seconds)
 CONF_STATS_UPDATE_INTERVAL = "stats_update_interval"

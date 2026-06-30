@@ -19,6 +19,7 @@ from .const import (
     DEFAULT_UPDATE_INFO,
     CONF_STATS_UPDATE_INTERVAL,
     DEFAULT_STATS_UPDATE_INTERVAL,
+    STATS_DURATION_API,
 )
 from .utils import normalize_mac_address, parse_timestamp, server_device_info
 
@@ -173,7 +174,10 @@ class TechnitiumDNSCoordinator(DataUpdateCoordinator):
         """Update data via library."""
         try:
             _LOGGER.debug("Fetching data from TechnitiumDNS API")
-            stats = await self.api.dashboard.stats(type=self.stats_duration, utc=True)
+            stats = await self.api.dashboard.stats(
+                type=STATS_DURATION_API.get(self.stats_duration, self.stats_duration),
+                utc=True,
+            )
 
             current_time = dt_util.utcnow()
             should_check_updates = (
