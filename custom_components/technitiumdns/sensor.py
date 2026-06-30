@@ -1,32 +1,25 @@
-from datetime import timedelta, datetime
+from datetime import timedelta
 import logging
-import asyncio
 
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
-from homeassistant.util import dt as dt_util
 from homeassistant.helpers.update_coordinator import (
-    DataUpdateCoordinator,
-    UpdateFailed,
     CoordinatorEntity,
 )
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.exceptions import ConfigEntryNotReady
-from technitiumdns import TransportError
 
 from .const import (
     DOMAIN,
     SENSOR_TYPES,
-    DEFAULT_UPDATE_INFO,
     CONF_STATS_UPDATE_INTERVAL,
     DEFAULT_STATS_UPDATE_INTERVAL,
-    STATS_DURATION_API,
 )
+from .coordinator import TechnitiumDNSCoordinator
 from .utils import normalize_mac_address, parse_timestamp, server_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(minutes=1)
-UPDATE_CHECK_INTERVAL = timedelta(hours=1)
 
 async def _create_device_sensors(leases, dhcp_coordinator, server_name, entry_id):
     """Create diagnostic sensors for a list of device leases."""
@@ -153,97 +146,6 @@ async def async_unload_entry(hass, entry):
         _LOGGER.info("Dynamic sensor manager cleaned up for entry %s", entry.entry_id)
 
     return True
-
-class TechnitiumDNSCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching TechnitiumDNS data."""
-
-    def __init__(self, hass, api, stats_duration, update_interval=60):
-        """Initialize."""
-        self.api = api
-        self.stats_duration = stats_duration
-        self._last_update_check = None
-        self._cached_update_info = None
-        super().__init__(
-            hass,
-            _LOGGER,
-            name=DOMAIN,
-            update_interval=timedelta(seconds=update_interval),
-        )
-
-    async def _async_update_data(self):
-        """Update data via library."""
-        try:
-            _LOGGER.debug("Fetching data from TechnitiumDNS API")
-            stats = await self.api.dashboard.stats(
-                type=STATS_DURATION_API.get(self.stats_duration, self.stats_duration),
-                utc=True,
-            )
-
-            current_time = dt_util.utcnow()
-            should_check_updates = (
-                self._last_update_check is None
-                or current_time - self._last_update_check >= UPDATE_CHECK_INTERVAL
-            )
-
-            update_result = self._cached_update_info
-            if should_check_updates:
-                _LOGGER.debug("Checking for updates (hourly check)")
-                try:
-                    update_result = await self.api.user.check_for_update()
-                    self._cached_update_info = update_result
-                    self._last_update_check = current_time
-                    _LOGGER.debug("Update check completed, cached for next hour")
-                except (TransportError, asyncio.TimeoutError) as update_err:
-                    _LOGGER.warning(
-                        "Failed to check for updates: %s, using cached data",
-                        update_err,
-                    )
-            else:
-                _LOGGER.debug("Using cached update info")
-
-            if update_result is None:
-                update_available = DEFAULT_UPDATE_INFO["response"]["updateAvailable"]
-            else:
-                update_available = update_result.update_available
-
-            counters = stats.stats
-            data = {
-                "queries": counters.total_queries,
-                "blocked_queries": counters.total_blocked,
-                "clients": counters.total_clients,
-                "update_available": update_available,
-                "no_error": counters.total_no_error,
-                "server_failure": counters.total_server_failure,
-                "nx_domain": counters.total_nx_domain,
-                "refused": counters.total_refused,
-                "authoritative": counters.total_authoritative,
-                "recursive": counters.total_recursive,
-                "cached": counters.total_cached,
-                "dropped": counters.total_dropped,
-                "zones": counters.zones,
-                "cached_entries": counters.cached_entries,
-                "allowed_zones": counters.allowed_zones,
-                "blocked_zones": counters.blocked_zones,
-                "allow_list_zones": counters.allow_list_zones,
-                "block_list_zones": counters.block_list_zones,
-                "top_clients": [
-                    {"name": client.name or "Unknown", "hits": client.hits}
-                    for client in stats.top_clients[:5]
-                ],
-                "top_domains": [
-                    {"name": domain.name or "Unknown", "hits": domain.hits}
-                    for domain in stats.top_domains[:5]
-                ],
-                "top_blocked_domains": [
-                    {"name": domain.name or "Unknown", "hits": domain.hits}
-                    for domain in stats.top_blocked_domains[:5]
-                ],
-            }
-            _LOGGER.debug("Data combined: %s", data)
-            return data
-        except Exception as err:
-            _LOGGER.error("Error fetching data: %s", err)
-            raise UpdateFailed(f"Error fetching data: {err}") from err
 
 class TechnitiumDNSSensor(CoordinatorEntity, SensorEntity):
     """Representation of a TechnitiumDNS sensor."""

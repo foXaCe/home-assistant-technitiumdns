@@ -1,13 +1,16 @@
 """TechnitiumDNS integration."""
 
+from __future__ import annotations
+
 import logging
 import voluptuous as vol
 
-from homeassistant import core
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 import homeassistant.helpers.config_validation as cv
+from technitiumdns import InvalidTokenError, TransportError
 
 from .const import (
     DOMAIN,
@@ -148,13 +151,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("Setting up TechnitiumDNS integration for entry %s", entry.entry_id)
     hass.data.setdefault(DOMAIN, {})
 
-    api = await create_api_client(
-        hass,
-        api_url=entry.data["api_url"],
-        token=entry.data["token"],
-        check_ssl=entry.data.get("check_ssl", True),
-        cluster_mode=entry.data.get("cluster_mode", False),
-    )
+    try:
+        api = await create_api_client(
+            hass,
+            api_url=entry.data["api_url"],
+            token=entry.data["token"],
+            check_ssl=entry.data.get("check_ssl", True),
+            cluster_mode=entry.data.get("cluster_mode", False),
+        )
+    except InvalidTokenError as err:
+        raise ConfigEntryAuthFailed("Invalid Technitium DNS API token") from err
+    except TransportError as err:
+        raise ConfigEntryNotReady(
+            f"Cannot connect to Technitium DNS server: {err}"
+        ) from err
 
     # Determine which platforms to load based on options
     platforms = ["button", "switch"]
