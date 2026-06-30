@@ -1,0 +1,55 @@
+name: Security audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pip-audit:
+    name: pip-audit (PyPI requirements)
+    if: contains(github.server_url, 'github.com')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pip-audit
+        run: pipx install pip-audit
+      - name: Audit manifest.json requirements
+        run: |
+          set -euo pipefail
+          for m in $(find custom_components -name manifest.json); do
+            python3 -c "import json,sys; print('\n'.join(json.load(open('$m')).get('requirements', [])))" > /tmp/reqs.txt
+            if [ -s /tmp/reqs.txt ]; then
+              echo "Auditing requirements from $m:"
+              cat /tmp/reqs.txt
+              pip-audit --requirement /tmp/reqs.txt --strict
+            fi
+          done
+
+  gitleaks:
+    name: Secret scan (gitleaks)
+    if: contains(github.server_url, 'github.com')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
