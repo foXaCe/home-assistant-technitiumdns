@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Run Home Assistant with this integration mounted, for local development.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+CONFIG_DIR="${CONFIG_DIR:-config}"
+
+if [ ! -d "$CONFIG_DIR" ]; then
+  mkdir -p "$CONFIG_DIR"
+  hass --config "$CONFIG_DIR" --script ensure_config
+fi
+
+# Symlink the integration into the dev config so HA loads it live.
+mkdir -p "$CONFIG_DIR/custom_components"
+ln -sfn "$(pwd)/custom_components/technitiumdns" "$CONFIG_DIR/custom_components/technitiumdns"
+
+exec hass --config "$CONFIG_DIR" --debug

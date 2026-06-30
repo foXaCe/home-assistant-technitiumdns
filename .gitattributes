@@ -1,0 +1,21 @@
+# Normalize line endings to LF on checkout/commit.
+* text=auto eol=lf
+
+# Explicit text files
+*.py    text
+*.json  text
+*.yaml  text
+*.yml   text
+*.md    text
+*.toml  text
+*.cfg   text
+*.ini   text
+*.sh    text eol=lf
+
+# Binary files (no diff, no EOL conversion)
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.zip   binary

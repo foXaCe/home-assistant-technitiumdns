@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Lint, format-check and type-check the integration.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+echo "==> ruff check"
+ruff check .
+
+echo "==> ruff format --check"
+ruff format --check .
+
+echo "==> mypy"
+mypy custom_components/technitiumdns || {
+  echo "mypy reported issues (non-blocking baseline — see pyproject.toml)."
+}
