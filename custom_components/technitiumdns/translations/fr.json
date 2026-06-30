@@ -19,10 +19,27 @@
           "username": "Nom d'utilisateur",
           "server_name": "Nom du serveur",
           "stats_duration": "Durée des statistiques",
-          "cluster_mode": "Use cluster aggregate statistics"
+          "cluster_mode": "Utiliser les statistiques agrégées du cluster"
         },
-        "description": "Veuillez entrer vos informations API TechnitiumDNS.",
-        "title": "Configurer TechnitiumDNS"
+        "description": "Veuillez saisir les informations de l'API TechnitiumDNS.",
+        "title": "Configurer TechnitiumDNS",
+        "data_description": {
+          "api_url": "Adresse et port de votre serveur Technitium DNS",
+          "server_name": "Libellé court pour ce serveur — utilisé dans les noms d'entités et d'appareils, pas le nom d'hôte de l'API",
+          "username": "Nom d'utilisateur de l'interface web de Technitium DNS",
+          "token": "Jeton d'API généré depuis la console web de Technitium DNS",
+          "stats_duration": "Fenêtre temporelle des statistiques du tableau de bord"
+        }
+      }
+    }
+  },
+  "selector": {
+    "stats_duration": {
+      "options": {
+        "last_hour": "Dernière heure",
+        "last_day": "Dernier jour",
+        "last_week": "Dernière semaine",
+        "last_month": "Dernier mois"
       }
     }
   },
@@ -32,30 +49,30 @@
         "data": {
           "enable_dhcp_tracking": "Activer le suivi des appareils DHCP",
           "dhcp_update_interval": "Intervalle de mise à jour DHCP (secondes)",
-          "dhcp_ip_filter_mode": "Mode de filtre IP",
-          "dhcp_ip_ranges": "Adresses IP/Plages (séparées par virgule ou nouvelle ligne)",
-          "dhcp_log_tracking": "Activer le suivi des logs DNS",
+          "dhcp_ip_filter_mode": "Mode de filtrage IP",
+          "dhcp_ip_ranges": "Adresses IP / plages (séparées par une virgule ou un retour à la ligne)",
+          "dhcp_log_tracking": "Activer le suivi des journaux DNS",
           "dhcp_stale_threshold": "Seuil d'inactivité (minutes)",
           "dhcp_smart_activity": "Activer l'analyse intelligente d'activité",
           "activity_score_threshold": "Seuil de score d'activité (points)",
           "activity_analysis_window": "Fenêtre d'analyse d'activité (minutes)",
           "test_dhcp": "Tester la connexion DHCP",
-          "stats_update_interval": "Statistics Update Interval (seconds)"
+          "stats_update_interval": "Intervalle de mise à jour des statistiques (secondes)"
         },
-        "description": "Activez le suivi des appareils DHCP pour surveiller les appareils connectés à votre serveur DHCP Technitium. L'analyse intelligente d'activité distingue entre l'activité réelle de l'utilisateur et le trafic automatisé en arrière-plan (NTP, mises à jour, télémétrie) pour éliminer les faux positifs.",
+        "description": "Activez le suivi des appareils DHCP pour surveiller les appareils connectés à votre serveur DHCP Technitium. L'analyse intelligente d'activité distingue l'activité réelle de l'utilisateur du trafic automatisé en arrière-plan (NTP, mises à jour, télémétrie) afin d'éliminer les faux positifs.",
         "title": "Options TechnitiumDNS"
       },
       "dhcp_test": {
         "data": {
           "dhcp_test_results": "Résultats du test DHCP"
         },
-        "description": "Résultats du test de connexion DHCP. Cela montre tous les baux DHCP disponibles de votre serveur Technitium DNS.",
+        "description": "Résultats du test de connexion DHCP. Affiche tous les baux DHCP disponibles de votre serveur Technitium DNS.",
         "title": "Résultats du test de connexion DHCP"
       }
     },
     "error": {
-      "dhcp_error": "L'API DHCP a retourné une erreur. Vérifiez la configuration de votre serveur Technitium DNS.",
-      "dhcp_connection_failed": "Échec de la connexion à l'API DHCP. Vérifiez l'URL de votre serveur et le token."
+      "dhcp_error": "L'API DHCP a renvoyé une erreur. Vérifiez la configuration de votre serveur Technitium DNS.",
+      "dhcp_connection_failed": "Échec de la connexion à l'API DHCP. Vérifiez l'URL de votre serveur et le jeton."
     }
   }
 }
