@@ -15,7 +15,13 @@ from .const import (
     DEFAULT_STATS_UPDATE_INTERVAL,
 )
 from .coordinator import TechnitiumDNSCoordinator
-from .utils import normalize_mac_address, parse_timestamp, server_device_info
+from .utils import (
+    manufacturer_from_mac,
+    model_from_hostname,
+    normalize_mac_address,
+    parse_timestamp,
+    server_device_info,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -279,45 +285,12 @@ class TechnitiumDHCPDeviceDiagnosticSensor(CoordinatorEntity, SensorEntity):
             # This shouldn't happen for DHCP devices, but include fallback
             device_id = f"{DOMAIN}_dhcp_device_unknown"
 
-        # Try to determine device manufacturer from MAC address OUI if possible
-        manufacturer = "Unknown"
-        if self._mac_address:
-            # Basic OUI lookup for common manufacturers (can be expanded)
-            mac_prefix = self._mac_address.replace(':', '').upper()[:6]
-            oui_map = {
-                "00215A": "Apple",
-                "3C0754": "Apple",
-                "F0F61C": "Apple",
-                "DC86D8": "Raspberry Pi Foundation",
-                "B827EB": "Raspberry Pi Foundation",
-                "E45F01": "Raspberry Pi Foundation",
-                "00E04C": "Realtek",
-                "EC086B": "Intel",
-                "3417EB": "Intel",
-                "000C29": "VMware",
-                "005056": "VMware",
-            }
-            manufacturer = oui_map.get(mac_prefix, "Unknown")
+        manufacturer = manufacturer_from_mac(self._mac_address)
 
         # Try to get hostname from device data for better model detection
         device_data = self._get_device_data()
-        hostname = ""
-        if device_data:
-            hostname = device_data.get("hostname", "")
-
-        # Determine a reasonable model name
-        if "raspberry" in hostname.lower() or "rpi" in hostname.lower():
-            model = "Raspberry Pi"
-        elif "iphone" in hostname.lower() or "ipad" in hostname.lower():
-            model = "iOS Device"
-        elif "android" in hostname.lower():
-            model = "Android Device"
-        elif "windows" in hostname.lower() or "pc" in hostname.lower():
-            model = "Windows PC"
-        elif "mac" in hostname.lower():
-            model = "Mac Computer"
-        else:
-            model = "Network Device"
+        hostname = device_data.get("hostname", "") if device_data else ""
+        model = model_from_hostname(hostname)
 
         return DeviceInfo(
             identifiers={(DOMAIN, device_id)},

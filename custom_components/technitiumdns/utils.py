@@ -8,7 +8,7 @@ from typing import Set
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
+from .const import DOMAIN, OUI_MANUFACTURERS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -186,3 +186,27 @@ def parse_timestamp(timestamp_str):
     except (ValueError, TypeError) as e:
         _LOGGER.warning("Failed to parse timestamp '%s': %s", timestamp_str, e)
         return None
+
+
+def manufacturer_from_mac(mac_address: str) -> str:
+    """Return the manufacturer for a MAC address via OUI lookup."""
+    if not mac_address:
+        return "Unknown"
+    mac_prefix = mac_address.replace(":", "").upper()[:6]
+    return OUI_MANUFACTURERS.get(mac_prefix, "Unknown")
+
+
+def model_from_hostname(hostname: str) -> str:
+    """Guess a human-readable device model from its hostname."""
+    host = (hostname or "").lower()
+    if "raspberry" in host or "rpi" in host:
+        return "Raspberry Pi"
+    if "iphone" in host or "ipad" in host:
+        return "iOS Device"
+    if "android" in host:
+        return "Android Device"
+    if "windows" in host or "pc" in host:
+        return "Windows PC"
+    if "mac" in host:
+        return "Mac Computer"
+    return "Network Device"

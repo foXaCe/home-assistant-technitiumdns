@@ -349,3 +349,20 @@ QUERY_TYPE_WEIGHTS = {
     'SOA': 0.2,    # Zone transfer (automated)
     'NS': 0.2      # Name server lookup (automated)
 }
+
+
+# OUI (first 3 MAC octets, uppercase, no separators) → manufacturer, for DHCP
+# device manufacturer detection. Extend as needed.
+OUI_MANUFACTURERS = {
+    "00215A": "Apple",
+    "3C0754": "Apple",
+    "F0F61C": "Apple",
+    "DC86D8": "Raspberry Pi Foundation",
+    "B827EB": "Raspberry Pi Foundation",
+    "E45F01": "Raspberry Pi Foundation",
+    "00E04C": "Realtek",
+    "EC086B": "Intel",
+    "3417EB": "Intel",
+    "000C29": "VMware",
+    "005056": "VMware",
+}

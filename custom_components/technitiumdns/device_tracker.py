@@ -35,7 +35,12 @@ from .dns_logs import (
     get_last_seen_for_multiple_ips,
     test_dns_logs_api,
 )
-from .utils import should_track_ip, normalize_mac_address
+from .utils import (
+    manufacturer_from_mac,
+    model_from_hostname,
+    normalize_mac_address,
+    should_track_ip,
+)
 from .activity_analyzer import SmartActivityAnalyzer, analyze_batch_device_activity
 
 # Import cleanup functionality
@@ -570,40 +575,8 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
             _LOGGER.warning("Device %s: No MAC address available (MAC='%s'), using IP-based device ID: %s", 
                            self._name, self._mac_address, device_id)
         
-        # Try to determine device manufacturer from MAC address OUI if possible
-        manufacturer = "Unknown"
-        if self._mac_address:
-            # Basic OUI lookup for common manufacturers (can be expanded)
-            mac_prefix = self._mac_address.replace(':', '').upper()[:6]
-            oui_map = {
-                "00215A": "Apple",
-                "3C0754": "Apple", 
-                "F0F61C": "Apple",
-                "DC86D8": "Raspberry Pi Foundation",
-                "B827EB": "Raspberry Pi Foundation",
-                "E45F01": "Raspberry Pi Foundation",
-                "00E04C": "Realtek",
-                "EC086B": "Intel",
-                "3417EB": "Intel",
-                "000C29": "VMware",
-                "005056": "VMware",
-            }
-            manufacturer = oui_map.get(mac_prefix, "Unknown")
-        
-        # Determine a reasonable model name
-        hostname = self._hostname or ""
-        if "raspberry" in hostname.lower() or "rpi" in hostname.lower():
-            model = "Raspberry Pi"
-        elif "iphone" in hostname.lower() or "ipad" in hostname.lower():
-            model = "iOS Device"
-        elif "android" in hostname.lower():
-            model = "Android Device"
-        elif "windows" in hostname.lower() or "pc" in hostname.lower():
-            model = "Windows PC"
-        elif "mac" in hostname.lower():
-            model = "Mac Computer"
-        else:
-            model = "Network Device"
+        manufacturer = manufacturer_from_mac(self._mac_address)
+        model = model_from_hostname(self._hostname or "")
         
         return DeviceInfo(
             identifiers={(DOMAIN, device_id)},
