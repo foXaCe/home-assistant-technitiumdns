@@ -41,7 +41,7 @@ from .activity_analyzer import SmartActivityAnalyzer, analyze_batch_device_activ
 # Import cleanup functionality
 async def async_cleanup_orphaned_entities(hass, entry_id, current_devices):
     """Import cleanup function from __init__.py"""
-    from . import async_cleanup_orphaned_entities as cleanup_func
+    from .services import async_cleanup_orphaned_entities as cleanup_func
     return await cleanup_func(hass, entry_id, current_devices)
 
 _LOGGER = logging.getLogger(__name__)
