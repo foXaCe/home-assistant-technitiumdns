@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Run the test suite.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if [ ! -d tests ]; then
+  echo "No tests/ directory yet. Add pytest tests under tests/."
+  exit 0
+fi
+
+exec pytest "$@"

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Install dev/test dependencies and the pre-commit hooks.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+pip install -r requirements_dev.txt
+
+if ! command -v prek >/dev/null 2>&1; then
+  pipx install prek || pip install prek
+fi
+prek install
+
+echo "Setup complete. Next: scripts/develop"

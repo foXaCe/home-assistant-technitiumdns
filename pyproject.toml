@@ -1,0 +1,55 @@
+[project]
+name = "technitiumdns"
+version = "3.0.0"
+description = "Custom Home Assistant integration for Technitium DNS Server."
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "GPL-3.0-or-later" }
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+src = ["custom_components"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "ASYNC", # flake8-async
+    "TCH",  # flake8-type-checking
+]
+ignore = [
+    "E501",  # line length handled by formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["custom_components.technitiumdns"]
+force-sort-within-sections = true
+
+[tool.mypy]
+python_version = "3.12"
+# Pragmatic baseline for an existing codebase — tighten progressively.
+# Not run as a blocking CI check; use `scripts/lint` or your IDE.
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"

@@ -1,0 +1,35 @@
+name: Stale
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: stale-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stale:
+    if: contains(github.server_url, 'github.com')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 60
+          days-before-close: 14
+          stale-issue-label: stale
+          stale-pr-label: stale
+          exempt-issue-labels: "pinned,security,help wanted,needs-review"
+          exempt-pr-labels: "pinned,security,dependencies"
+          stale-issue-message: >
+            This issue has been inactive for 60 days. Without further activity it will be
+            closed in 14 days.
+          stale-pr-message: >
+            This pull request has been inactive for 60 days. Without further activity it
+            will be closed in 14 days.

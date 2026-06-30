@@ -8,10 +8,12 @@ Security fixes are provided for the latest release on the default branch. Older 
 
 **Please do not report security vulnerabilities via public GitHub issues.**
 
-Instead, use one of these channels:
+Instead, use:
 
-1. **GitHub Security Advisories** — [Open a private report](https://github.com/Atlas-Commons/.github/security/advisories/new) for the affected repository, or use **Report a vulnerability** on the repository Security tab.
-2. **Email** — contact the maintainers at **stephen@atlastechsolutions.co.uk** with details and steps to reproduce.
+1. **GitHub Security Advisories** — [Open a private report](https://github.com/foXaCe/home-assistant-technitiumdns/security/advisories/new), or use **Report a vulnerability** on the repository Security tab.
+
+For issues affecting the upstream project, you may also report to
+[Atlas-Commons/home-assistant-technitiumdns](https://github.com/Atlas-Commons/home-assistant-technitiumdns/security/advisories/new).
 
 Include as much detail as possible: affected versions, impact, reproduction steps, and suggested mitigations if you have them.
 

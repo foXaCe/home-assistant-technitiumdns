@@ -51,7 +51,8 @@ an individual is officially representing the community in public spaces.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to **stephen@atlastechsolutions.co.uk**.
+reported by opening a [private report](https://github.com/foXaCe/home-assistant-technitiumdns/security/advisories/new)
+or contacting [@foXaCe](https://github.com/foXaCe).
 
 All complaints will be reviewed and investigated promptly and fairly.
 

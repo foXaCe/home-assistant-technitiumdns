@@ -1,0 +1,302 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "forkProcessing": "enabled",
+  "baseBranchPatterns": [
+    "main"
+  ],
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(deps)",
+    "group:allNonMajor",
+    "group:monorepos",
+    ":dependencyDashboard",
+    ":timezone(Europe/Paris)",
+    ":enablePreCommit",
+    "docker:enableMajor",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigestsToSemver"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "assignees": [
+    "foXaCe"
+  ],
+  "rangeStrategy": "auto",
+  "rebaseWhen": "auto",
+  "prConcurrentLimit": 12,
+  "prHourlyLimit": 0,
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "📦 Renovate Dependency Dashboard",
+  "dependencyDashboardLabels": [
+    "dependencies",
+    "dashboard"
+  ],
+  "configMigration": true,
+  "commitBody": "Signed-off-by: renovate[bot] <bot@renovateapp.com>",
+  "vulnerabilityAlerts": {
+    "enabled": false
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 6am on monday"
+    ]
+  },
+  "github-actions": {
+    "managerFilePatterns": [
+      "/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/",
+      "/(^|/)\\.forgejo/workflows/[^/]+\\.ya?ml$/",
+      "/(^|/)action\\.ya?ml$/"
+    ]
+  },
+  "pip_requirements": {
+    "managerFilePatterns": [
+      "/(^|/)requirements([\\w-]*)\\.txt$/"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track the integration's PyPI requirements declared in manifest.json",
+      "managerFilePatterns": [
+        "/(^|/)custom_components/[^/]+/manifest\\.json$/"
+      ],
+      "matchStrings": [
+        "\"(?<depName>[A-Za-z0-9._-]+)(==|>=|~=|<=|>|<)(?<currentValue>[0-9][0-9A-Za-z.+!-]*)\""
+      ],
+      "datasourceTemplate": "pypi",
+      "versioningTemplate": "pep440"
+    },
+    {
+      "customType": "regex",
+      "description": "Track Forgejo-style action pins (uses: https://github.com/owner/repo@ref)",
+      "managerFilePatterns": [
+        "/(^|/)\\.forgejo/workflows/[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "uses:\\s*https://github\\.com/(?<depName>[\\w.-]+/[\\w.-]+)@(?<currentValue>[\\w.+-]+)"
+      ],
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "Track container images launched via `docker run` in workflows",
+      "managerFilePatterns": [
+        "/(^|/)\\.(github|forgejo)/workflows/[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "docker run[^\\n]*?\\s(?<depName>[a-z0-9.\\-/]+/[a-z0-9.\\-]+):(?<currentValue>[\\w][\\w.\\-]*)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Track Python version pins (python-version: \"3.12\") in workflows and configs",
+      "managerFilePatterns": [
+        "/(^|/)\\.(github|forgejo)/workflows/[^/]+\\.ya?ml$/",
+        "/(^|/)\\.python-version$/",
+        "/(^|/)\\.tool-versions$/",
+        "/(^|/)pyproject\\.toml$/"
+      ],
+      "matchStrings": [
+        "python[_-]?version[\"'\\s:=]+[\"']?(?<currentValue>3\\.\\d+(\\.\\d+)?)[\"']?"
+      ],
+      "depNameTemplate": "python",
+      "datasourceTemplate": "python-version",
+      "versioningTemplate": "pep440"
+    },
+    {
+      "customType": "regex",
+      "description": "Track tools pinned via a `# renovate: datasource=… depName=…` comment",
+      "managerFilePatterns": [
+        "/(^|/)\\.(github|forgejo)/workflows/[^/]+\\.ya?ml$/",
+        "/(^|/)scripts/[^/]+$/",
+        "/(^|/)\\.devcontainer/[^/]+$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( versioning=(?<versioning>\\S+))?\\s+[\\w.-]+?[=@: ][\"']?(?<currentValue>[\\w.+-]+)"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Auto-merge low-risk updates once CI is green",
+      "matchUpdateTypes": [
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true,
+      "platformAutomerge": true,
+      "labels": [
+        "dependencies",
+        "auto-merge"
+      ]
+    },
+    {
+      "description": "GitHub / Forgejo Actions",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "labels": [
+        "dependencies",
+        "github-actions"
+      ],
+      "automerge": true,
+      "platformAutomerge": true,
+      "groupName": "github actions"
+    },
+    {
+      "description": "Forgejo action pins (custom manager)",
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchFileNames": [
+        ".forgejo/workflows/**"
+      ],
+      "labels": [
+        "dependencies",
+        "github-actions",
+        "forgejo"
+      ],
+      "automerge": true,
+      "platformAutomerge": true,
+      "groupName": "github actions"
+    },
+    {
+      "description": "pre-commit hooks",
+      "matchManagers": [
+        "pre-commit"
+      ],
+      "labels": [
+        "dependencies",
+        "pre-commit"
+      ],
+      "groupName": "pre-commit hooks",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "Devcontainer images and features",
+      "matchManagers": [
+        "devcontainer"
+      ],
+      "labels": [
+        "dependencies",
+        "devcontainer"
+      ],
+      "groupName": "devcontainer"
+    },
+    {
+      "description": "Docker images",
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
+      "labels": [
+        "dependencies",
+        "docker"
+      ]
+    },
+    {
+      "description": "Container images pulled in workflows (custom manager)",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        ".github/workflows/**",
+        ".forgejo/workflows/**"
+      ],
+      "labels": [
+        "dependencies",
+        "docker",
+        "ci"
+      ]
+    },
+    {
+      "description": "Python dependencies (requirements + pyproject)",
+      "matchManagers": [
+        "pip_requirements",
+        "pip_setup",
+        "pep621"
+      ],
+      "labels": [
+        "dependencies",
+        "python"
+      ]
+    },
+    {
+      "description": "The integration's own runtime dependency — review manually",
+      "matchPackageNames": [
+        "technitiumdns-api"
+      ],
+      "labels": [
+        "dependencies",
+        "python",
+        "needs-review"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Home Assistant core — review manually, monthly",
+      "matchDepNames": [
+        "homeassistant",
+        "home-assistant"
+      ],
+      "labels": [
+        "dependencies",
+        "homeassistant",
+        "needs-review"
+      ],
+      "automerge": false,
+      "groupName": "homeassistant",
+      "schedule": [
+        "before 6am on the first day of the month"
+      ]
+    },
+    {
+      "description": "Python runtime version bumps — review manually",
+      "matchDatasources": [
+        "python-version"
+      ],
+      "labels": [
+        "dependencies",
+        "python",
+        "needs-review"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Lint & format tooling",
+      "matchPackageNames": [
+        "/^ruff/",
+        "/^mypy/",
+        "/^astral-sh\\/ruff/",
+        "/^pre-commit/"
+      ],
+      "groupName": "lint & format tools",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "Test stack",
+      "matchPackageNames": [
+        "/^pytest/",
+        "/pytest-homeassistant-custom-component/",
+        "/^syrupy/"
+      ],
+      "groupName": "test stack"
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/venv/**",
+    "**/__pycache__/**",
+    "**/.tox/**",
+    "**/config/**"
+  ]
+}

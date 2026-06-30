@@ -31,6 +31,8 @@ from .const import (
     DHCP_STALE_THRESHOLD_OPTIONS,
     DHCP_UPDATE_INTERVAL_OPTIONS,
     DOMAIN,
+    STATS_DURATION_API,
+    STATS_DURATION_OPTIONS,
     STATS_UPDATE_INTERVAL_OPTIONS,
 )
 
@@ -63,7 +65,12 @@ class TechnitiumDNSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     check_ssl=user_input["check_ssl"],
                     cluster_mode=user_input.get("cluster_mode", False),
                 )
-                await api.dashboard.stats(type=user_input["stats_duration"], utc=True)
+                await api.dashboard.stats(
+                    type=STATS_DURATION_API.get(
+                        user_input["stats_duration"], user_input["stats_duration"]
+                    ),
+                    utc=True,
+                )
 
                 return self.async_create_entry(
                     title=user_input["server_name"], data=user_input
@@ -103,12 +110,7 @@ class TechnitiumDNSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
                 vol.Required("stats_duration"): selector.SelectSelector(
                     selector.SelectSelectorConfig(
-                        options=[
-                            "LastHour",
-                            "LastDay",
-                            "LastWeek",
-                            "LastMonth",
-                        ],
+                        options=STATS_DURATION_OPTIONS,
                         translation_key="stats_duration",
                     )
                 ),

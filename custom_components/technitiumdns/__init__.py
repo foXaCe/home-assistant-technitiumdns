@@ -85,6 +85,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         "Migrating config entry '%s' from version %s to %s",
         config_entry.title,
         config_entry.version,
+        CONFIG_VERSION,
     )
 
     # --- Migration from version 1 to 2 ---
