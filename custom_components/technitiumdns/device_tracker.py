@@ -204,12 +204,9 @@ class TechnitiumDHCPDeviceTracker(
         else:
             self._name = f"Device_{lease_data.get('ip_address', '').replace('.', '_')}"
 
-        _LOGGER.info(
-            "Created device tracker '%s' for MAC %s (IP: %s)",
-            self._name,
-            self._mac_address,
-            lease_data.get("ip_address"),
-        )
+        # No per-device identifier logging here: async_setup_entry already logs the
+        # aggregate device-tracker count at INFO, and logging names/MACs/IPs would be
+        # both noisy and a clear-text-logging-of-sensitive-data concern.
 
     @property
     def name(self) -> str:
