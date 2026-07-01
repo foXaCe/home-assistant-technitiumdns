@@ -41,6 +41,20 @@ CONFIG_VERSION = 7
 _LOGGER = logging.getLogger(__name__)
 
 
+def _int_select(options, translation_key: str) -> "selector.SelectSelector":
+    """Build a translatable dropdown for a list of integer choices.
+
+    The option values are stored as strings (Home Assistant selectors are
+    string-based); read them back through ``int(...)``.
+    """
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=[str(option) for option in options],
+            translation_key=translation_key,
+        )
+    )
+
+
 @config_entries.HANDLERS.register(DOMAIN)
 class TechnitiumDNSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for TechnitiumDNS."""
@@ -191,14 +205,18 @@ class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
                 ): bool,
                 vol.Optional(
                     "dhcp_update_interval",
-                    default=self.config_entry.options.get("dhcp_update_interval", 60),
-                ): vol.In(DHCP_UPDATE_INTERVAL_OPTIONS),
+                    default=str(
+                        self.config_entry.options.get("dhcp_update_interval", 60)
+                    ),
+                ): _int_select(DHCP_UPDATE_INTERVAL_OPTIONS, "dhcp_update_interval"),
                 vol.Optional(
                     CONF_STATS_UPDATE_INTERVAL,
-                    default=self.config_entry.options.get(
-                        CONF_STATS_UPDATE_INTERVAL, DEFAULT_STATS_UPDATE_INTERVAL
+                    default=str(
+                        self.config_entry.options.get(
+                            CONF_STATS_UPDATE_INTERVAL, DEFAULT_STATS_UPDATE_INTERVAL
+                        )
                     ),
-                ): vol.In(STATS_UPDATE_INTERVAL_OPTIONS),
+                ): _int_select(STATS_UPDATE_INTERVAL_OPTIONS, "stats_update_interval"),
                 vol.Optional(
                     "dhcp_ip_filter_mode",
                     default=self.config_entry.options.get(
@@ -222,10 +240,14 @@ class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
                 ): bool,
                 vol.Optional(
                     CONF_DHCP_STALE_THRESHOLD,
-                    default=self.config_entry.options.get(
-                        CONF_DHCP_STALE_THRESHOLD, DEFAULT_DHCP_STALE_THRESHOLD
+                    default=str(
+                        self.config_entry.options.get(
+                            CONF_DHCP_STALE_THRESHOLD, DEFAULT_DHCP_STALE_THRESHOLD
+                        )
                     ),
-                ): vol.In(list(DHCP_STALE_THRESHOLD_OPTIONS.keys())),
+                ): _int_select(
+                    list(DHCP_STALE_THRESHOLD_OPTIONS.keys()), "dhcp_stale_threshold"
+                ),
                 vol.Optional(
                     CONF_DHCP_SMART_ACTIVITY,
                     default=self.config_entry.options.get(
@@ -234,16 +256,26 @@ class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
                 ): bool,
                 vol.Optional(
                     CONF_ACTIVITY_SCORE_THRESHOLD,
-                    default=self.config_entry.options.get(
-                        CONF_ACTIVITY_SCORE_THRESHOLD, DEFAULT_ACTIVITY_SCORE_THRESHOLD
+                    default=str(
+                        self.config_entry.options.get(
+                            CONF_ACTIVITY_SCORE_THRESHOLD,
+                            DEFAULT_ACTIVITY_SCORE_THRESHOLD,
+                        )
                     ),
-                ): vol.In(list(ACTIVITY_SCORE_THRESHOLDS.keys())),
+                ): _int_select(
+                    list(ACTIVITY_SCORE_THRESHOLDS.keys()), "activity_score_threshold"
+                ),
                 vol.Optional(
                     CONF_ACTIVITY_ANALYSIS_WINDOW,
-                    default=self.config_entry.options.get(
-                        CONF_ACTIVITY_ANALYSIS_WINDOW, DEFAULT_ACTIVITY_ANALYSIS_WINDOW
+                    default=str(
+                        self.config_entry.options.get(
+                            CONF_ACTIVITY_ANALYSIS_WINDOW,
+                            DEFAULT_ACTIVITY_ANALYSIS_WINDOW,
+                        )
                     ),
-                ): vol.In(list(ACTIVITY_ANALYSIS_WINDOWS.keys())),
+                ): _int_select(
+                    list(ACTIVITY_ANALYSIS_WINDOWS.keys()), "activity_analysis_window"
+                ),
                 vol.Optional("test_dhcp", default=False): bool,
             }
         )

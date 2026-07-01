@@ -53,7 +53,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
         )
 
         # Get update interval from options, default to 60 seconds
-        update_interval = entry.options.get("dhcp_update_interval", 60)
+        # (selectors store their choice as a string, so coerce back to int)
+        update_interval = int(entry.options.get("dhcp_update_interval", 60))
 
         # Get IP filtering options
         ip_filter_mode = entry.options.get("dhcp_ip_filter_mode", "disabled")
@@ -63,19 +64,23 @@ async def async_setup_entry(hass, entry, async_add_entities):
         log_tracking = entry.options.get(
             CONF_DHCP_LOG_TRACKING, DEFAULT_DHCP_LOG_TRACKING
         )
-        stale_threshold = entry.options.get(
-            CONF_DHCP_STALE_THRESHOLD, DEFAULT_DHCP_STALE_THRESHOLD
+        stale_threshold = int(
+            entry.options.get(CONF_DHCP_STALE_THRESHOLD, DEFAULT_DHCP_STALE_THRESHOLD)
         )
 
         # Get smart activity options
         smart_activity = entry.options.get(
             CONF_DHCP_SMART_ACTIVITY, DEFAULT_DHCP_SMART_ACTIVITY
         )
-        activity_threshold = entry.options.get(
-            CONF_ACTIVITY_SCORE_THRESHOLD, DEFAULT_ACTIVITY_SCORE_THRESHOLD
+        activity_threshold = int(
+            entry.options.get(
+                CONF_ACTIVITY_SCORE_THRESHOLD, DEFAULT_ACTIVITY_SCORE_THRESHOLD
+            )
         )
-        analysis_window = entry.options.get(
-            CONF_ACTIVITY_ANALYSIS_WINDOW, DEFAULT_ACTIVITY_ANALYSIS_WINDOW
+        analysis_window = int(
+            entry.options.get(
+                CONF_ACTIVITY_ANALYSIS_WINDOW, DEFAULT_ACTIVITY_ANALYSIS_WINDOW
+            )
         )
 
         _LOGGER.info(
