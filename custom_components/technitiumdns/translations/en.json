@@ -74,5 +74,72 @@
       "dhcp_error": "DHCP API returned an error. Check your Technitium DNS server configuration.",
       "dhcp_connection_failed": "Failed to connect to DHCP API. Verify your server URL and token."
     }
+  },
+  "entity": {
+    "sensor": {
+      "queries": {
+        "name": "Total queries"
+      },
+      "blocked_queries": {
+        "name": "Blocked queries"
+      },
+      "clients": {
+        "name": "Clients"
+      },
+      "update_available": {
+        "name": "Update available"
+      },
+      "no_error": {
+        "name": "Total no error"
+      },
+      "server_failure": {
+        "name": "Total server failure"
+      },
+      "nx_domain": {
+        "name": "Total NXDOMAIN"
+      },
+      "refused": {
+        "name": "Total refused"
+      },
+      "authoritative": {
+        "name": "Total authoritative"
+      },
+      "recursive": {
+        "name": "Total recursive"
+      },
+      "cached": {
+        "name": "Total cached"
+      },
+      "dropped": {
+        "name": "Total dropped"
+      },
+      "zones": {
+        "name": "Zones"
+      },
+      "cached_entries": {
+        "name": "Cached entries"
+      },
+      "allowed_zones": {
+        "name": "Allowed zones"
+      },
+      "blocked_zones": {
+        "name": "Blocked zones"
+      },
+      "allow_list_zones": {
+        "name": "Allow list zones"
+      },
+      "block_list_zones": {
+        "name": "Block list zones"
+      },
+      "top_clients": {
+        "name": "Top clients"
+      },
+      "top_domains": {
+        "name": "Top domains"
+      },
+      "top_blocked_domains": {
+        "name": "Top blocked domains"
+      }
+    }
   }
 }

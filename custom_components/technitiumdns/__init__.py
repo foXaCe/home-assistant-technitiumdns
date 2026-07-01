@@ -146,7 +146,43 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         hass.config_entries.async_update_entry(config_entry, data=new_data, version=4)
         _LOGGER.info("Successfully migrated config entry to version 4.")
 
+    # --- Migration from version 4 to 5 ---
+    # Normalise the DNS-statistics sensor unique_ids to the {entry_id}_{key} scheme.
+    if config_entry.version == 4:
+        await _async_migrate_stats_unique_ids(hass, config_entry)
+        hass.config_entries.async_update_entry(config_entry, version=5)
+        _LOGGER.info("Successfully migrated config entry to version 5.")
+
     return True
+
+
+async def _async_migrate_stats_unique_ids(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Migrate DNS-stats sensor unique_ids from the legacy server-based scheme.
+
+    Legacy: ``technitiumdns_dns_stats_{type}_{server}`` -> new: ``{entry_id}_{type}``.
+    """
+    registry = er.async_get(hass)
+    server_clean = entry.data.get("server_name", "").replace(" ", "_").lower()
+    old_prefix = f"{DOMAIN}_dns_stats_"
+    suffix = f"_{server_clean}" if server_clean else ""
+
+    for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
+        uid = entity.unique_id or ""
+        if not uid.startswith(old_prefix):
+            continue
+        sensor_type = uid[len(old_prefix) :]
+        if suffix and sensor_type.endswith(suffix):
+            sensor_type = sensor_type[: -len(suffix)]
+        new_uid = f"{entry.entry_id}_{sensor_type}"
+        if new_uid == uid:
+            continue
+        conflict = registry.async_get_entity_id(entity.domain, DOMAIN, new_uid)
+        if conflict and conflict != entity.entity_id:
+            registry.async_remove(conflict)
+        registry.async_update_entity(entity.entity_id, new_unique_id=new_uid)
+        _LOGGER.debug("Migrated unique_id %s -> %s", uid, new_uid)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

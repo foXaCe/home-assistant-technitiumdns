@@ -74,5 +74,72 @@
       "dhcp_error": "L'API DHCP a renvoyé une erreur. Vérifiez la configuration de votre serveur Technitium DNS.",
       "dhcp_connection_failed": "Échec de la connexion à l'API DHCP. Vérifiez l'URL de votre serveur et le jeton."
     }
+  },
+  "entity": {
+    "sensor": {
+      "queries": {
+        "name": "Total des requêtes"
+      },
+      "blocked_queries": {
+        "name": "Requêtes bloquées"
+      },
+      "clients": {
+        "name": "Clients"
+      },
+      "update_available": {
+        "name": "Mise à jour disponible"
+      },
+      "no_error": {
+        "name": "Total sans erreur"
+      },
+      "server_failure": {
+        "name": "Total échecs serveur"
+      },
+      "nx_domain": {
+        "name": "Total NXDOMAIN"
+      },
+      "refused": {
+        "name": "Total refusées"
+      },
+      "authoritative": {
+        "name": "Total faisant autorité"
+      },
+      "recursive": {
+        "name": "Total récursives"
+      },
+      "cached": {
+        "name": "Total en cache"
+      },
+      "dropped": {
+        "name": "Total rejetées"
+      },
+      "zones": {
+        "name": "Zones"
+      },
+      "cached_entries": {
+        "name": "Entrées en cache"
+      },
+      "allowed_zones": {
+        "name": "Zones autorisées"
+      },
+      "blocked_zones": {
+        "name": "Zones bloquées"
+      },
+      "allow_list_zones": {
+        "name": "Zones des listes d'autorisation"
+      },
+      "block_list_zones": {
+        "name": "Zones des listes de blocage"
+      },
+      "top_clients": {
+        "name": "Principaux clients"
+      },
+      "top_domains": {
+        "name": "Principaux domaines"
+      },
+      "top_blocked_domains": {
+        "name": "Principaux domaines bloqués"
+      }
+    }
   }
 }

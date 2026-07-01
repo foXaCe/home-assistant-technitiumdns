@@ -36,7 +36,7 @@ from .const import (
     STATS_UPDATE_INTERVAL_OPTIONS,
 )
 
-CONFIG_VERSION = 4
+CONFIG_VERSION = 5
 
 _LOGGER = logging.getLogger(__name__)
 
