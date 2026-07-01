@@ -48,6 +48,13 @@
         "last_week": "Last week",
         "last_month": "Last month"
       }
+    },
+    "dhcp_ip_filter_mode": {
+      "options": {
+        "disabled": "No IP filtering",
+        "include": "Include only specified IPs/ranges",
+        "exclude": "Exclude specified IPs/ranges"
+      }
     }
   },
   "options": {
@@ -63,7 +70,7 @@
           "dhcp_stale_threshold": "Staleness Threshold (minutes)",
           "test_dhcp": "Test DHCP Connection"
         },
-        "description": "{dhcp_description}",
+        "description": "Enable DHCP device tracking to monitor devices connected to your Technitium DHCP server. The update interval controls how often device status is checked. Use IP filtering to control which devices are tracked based on their IP addresses.",
         "title": "TechnitiumDNS Options"
       },
       "dhcp_test": {

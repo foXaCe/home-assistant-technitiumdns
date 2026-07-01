@@ -204,7 +204,12 @@ class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
                     default=self.config_entry.options.get(
                         "dhcp_ip_filter_mode", "disabled"
                     ),
-                ): vol.In(list(DHCP_IP_FILTER_MODES.keys())),
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=list(DHCP_IP_FILTER_MODES.keys()),
+                        translation_key="dhcp_ip_filter_mode",
+                    )
+                ),
                 vol.Optional(
                     "dhcp_ip_ranges",
                     default=self.config_entry.options.get("dhcp_ip_ranges", ""),
@@ -246,14 +251,6 @@ class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="init",
             data_schema=options_schema,
-            description_placeholders={
-                "dhcp_description": (
-                    "Enable DHCP device tracking to monitor devices connected to your "
-                    "Technitium DHCP server. Update interval determines how often device "
-                    "status is checked. Use IP filtering to control which devices are "
-                    "tracked based on their IP addresses."
-                )
-            },
         )
 
     async def async_step_dhcp_test(self, user_input=None):

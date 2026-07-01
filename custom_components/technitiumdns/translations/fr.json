@@ -48,6 +48,13 @@
         "last_week": "Dernière semaine",
         "last_month": "Dernier mois"
       }
+    },
+    "dhcp_ip_filter_mode": {
+      "options": {
+        "disabled": "Aucun filtrage IP",
+        "include": "Inclure uniquement les IP/plages spécifiées",
+        "exclude": "Exclure les IP/plages spécifiées"
+      }
     }
   },
   "options": {
@@ -66,7 +73,7 @@
           "test_dhcp": "Tester la connexion DHCP",
           "stats_update_interval": "Intervalle de mise à jour des statistiques (secondes)"
         },
-        "description": "Activez le suivi des appareils DHCP pour surveiller les appareils connectés à votre serveur DHCP Technitium. L'analyse intelligente d'activité distingue l'activité réelle de l'utilisateur du trafic automatisé en arrière-plan (NTP, mises à jour, télémétrie) afin d'éliminer les faux positifs.",
+        "description": "Activez le suivi des appareils DHCP pour surveiller les appareils connectés à votre serveur DHCP Technitium. L'intervalle de mise à jour détermine la fréquence de vérification de l'état des appareils. Utilisez le filtrage IP pour contrôler quels appareils sont suivis selon leur adresse IP.",
         "title": "Options TechnitiumDNS"
       },
       "dhcp_test": {
