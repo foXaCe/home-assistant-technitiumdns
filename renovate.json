@@ -93,12 +93,11 @@
     },
     {
       "customType": "regex",
-      "description": "Track Python version pins (python-version: \"3.12\") in workflows and configs",
+      "description": "Track Python version pins (python-version: \"3.12\") in CI workflows and version files (NOT pyproject.toml, whose mypy python_version / ruff target are minimum-support pins, not deps to keep current)",
       "managerFilePatterns": [
         "/(^|/)\\.(github|forgejo)/workflows/[^/]+\\.ya?ml$/",
         "/(^|/)\\.python-version$/",
-        "/(^|/)\\.tool-versions$/",
-        "/(^|/)pyproject\\.toml$/"
+        "/(^|/)\\.tool-versions$/"
       ],
       "matchStrings": [
         "python[_-]?version[\"'\\s:=]+[\"']?(?<currentValue>3\\.\\d+(\\.\\d+)?)[\"']?"
