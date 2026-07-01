@@ -37,7 +37,7 @@ known-first-party = ["custom_components.technitiumdns"]
 force-sort-within-sections = true
 
 [tool.mypy]
-python_version = "3.14.6"
+python_version = "3.14"
 # Pragmatic baseline for an existing codebase — tighten progressively.
 # Not run as a blocking CI check; use `scripts/lint` or your IDE.
 warn_redundant_casts = true
