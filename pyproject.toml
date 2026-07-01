@@ -38,12 +38,16 @@ force-sort-within-sections = true
 
 [tool.mypy]
 python_version = "3.14"
-# Pragmatic baseline for an existing codebase — tighten progressively.
-# Not run as a blocking CI check; use `scripts/lint` or your IDE.
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_unused_configs = true
+strict = true
+# Home Assistant re-exports many names (DeviceInfo, ScannerEntity, ...) without
+# listing them in __all__; those documented import paths are valid at runtime.
+implicit_reexport = true
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# The technitiumdns-api client library ships no type information.
+module = "technitiumdns.*"
+follow_imports = "skip"
 
 [[tool.mypy.overrides]]
 module = "tests.*"

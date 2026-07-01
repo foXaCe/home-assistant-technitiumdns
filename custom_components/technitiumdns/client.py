@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
-from homeassistant.core import HomeAssistant
+from typing import TYPE_CHECKING
+
 from homeassistant.helpers import aiohttp_client
 
-from technitiumdns import AsyncClient
+# The technitiumdns-api client library has the same top-level name as this
+# custom component; mypy's flat module resolution (no `custom_components`
+# package marker) resolves the bare "technitiumdns" name to this integration
+# instead of the installed library, hence the attr-defined false positive.
+from technitiumdns import AsyncClient  # type: ignore[attr-defined]
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 
 async def create_api_client(

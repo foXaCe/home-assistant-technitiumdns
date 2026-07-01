@@ -4,12 +4,9 @@ from __future__ import annotations
 
 from datetime import timedelta
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from homeassistant.util import dt as dt_util
-
-if TYPE_CHECKING:
-    from technitiumdns import AsyncClient
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +15,7 @@ def _entry_to_dict(entry: Any) -> dict[str, Any]:
     """Convert a QueryLogEntry (or dict) to the dict shape activity_analyzer expects."""
     if isinstance(entry, dict):
         return entry
-    raw = getattr(entry, "raw", None)
+    raw: dict[str, Any] | None = getattr(entry, "raw", None)
     if raw:
         return raw
     return {
@@ -34,7 +31,7 @@ def _entry_to_dict(entry: Any) -> dict[str, Any]:
     }
 
 
-async def test_dns_logs_api(client: AsyncClient) -> dict[str, Any]:
+async def test_dns_logs_api(client: Any) -> dict[str, Any]:
     """Test if DNS query logging is available via an installed DNS app."""
     try:
         loggers = await client.apps.list_dns_loggers()
@@ -92,7 +89,7 @@ async def test_dns_logs_api(client: AsyncClient) -> dict[str, Any]:
 
 
 async def _query_logs(
-    client: AsyncClient,
+    client: Any,
     *,
     start_date: str,
     end_date: str,
@@ -118,7 +115,7 @@ async def _query_logs(
 
 
 async def get_last_seen_for_multiple_ips(
-    client: AsyncClient,
+    client: Any,
     ip_addresses: list[str],
     hours_back: int = 24,
 ) -> dict[str, str]:
@@ -155,11 +152,15 @@ async def get_last_seen_for_multiple_ips(
         for entry in entries:
             client_ip = entry.get("clientIpAddress")
             timestamp = entry.get("timestamp")
-            if client_ip and timestamp and client_ip in target_ips:
-                if client_ip not in last_seen_times:
-                    last_seen_times[client_ip] = timestamp
-                    if len(last_seen_times) == len(target_ips):
-                        break
+            if (
+                client_ip
+                and timestamp
+                and client_ip in target_ips
+                and client_ip not in last_seen_times
+            ):
+                last_seen_times[client_ip] = timestamp
+                if len(last_seen_times) == len(target_ips):
+                    break
 
         _LOGGER.info(
             "Batch DNS log query completed: found activity for %d/%d devices",
@@ -173,8 +174,8 @@ async def get_last_seen_for_multiple_ips(
 
 
 async def get_dns_logs_for_analysis(
-    client: AsyncClient,
-    hours_back: int = 2,
+    client: Any,
+    hours_back: float = 2,
 ) -> list[dict[str, Any]]:
     """Return DNS log entries as dicts for smart activity analysis."""
     api_test = await test_dns_logs_api(client)

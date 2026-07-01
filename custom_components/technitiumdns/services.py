@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -13,15 +13,18 @@ from .const import DOMAIN
 from .models import async_loaded_runtime_data
 from .utils import normalize_mac_address
 
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant, ServiceCall
+
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_register_services(hass: HomeAssistant):
+async def async_register_services(hass: HomeAssistant) -> None:
     """Register integration services."""
     if hass.services.has_service(DOMAIN, "cleanup_devices"):
         return  # Service already registered
 
-    async def handle_cleanup_devices(call):
+    async def handle_cleanup_devices(call: ServiceCall) -> None:
         """Handle cleanup_devices service call."""
         config_entry_id = call.data.get("config_entry_id")
         _LOGGER.debug(
@@ -155,7 +158,7 @@ async def async_register_services(hass: HomeAssistant):
                 len(runtime_map),
             )
 
-    async def handle_get_dhcp_leases(call):
+    async def handle_get_dhcp_leases(call: ServiceCall) -> None:
         """Handle get_dhcp_leases service call."""
         config_entry_id = call.data.get("config_entry_id")
         include_inactive = call.data.get("include_inactive", False)
@@ -327,8 +330,8 @@ async def async_register_services(hass: HomeAssistant):
 
 
 async def async_cleanup_orphaned_entities(
-    hass: HomeAssistant, entry_id: str, current_devices: set
-):
+    hass: HomeAssistant, entry_id: str, current_devices: set[str]
+) -> None:
     """Log information about devices that should be cleaned up.
 
     Note: Instead of manually manipulating entity registry (which can cause issues),

@@ -5,7 +5,10 @@ Diagnostic sensor entities for each tracked device are created by the sensor pla
 and are automatically linked to the device through proper device grouping.
 """
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.device_tracker import ScannerEntity, SourceType
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -34,10 +37,17 @@ from .utils import (
     normalize_mac_address,
 )
 
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
     """Set up TechnitiumDNS DHCP device trackers."""
     _LOGGER.info(
         "Starting TechnitiumDNS DHCP device tracker setup for entry %s", entry.entry_id
@@ -118,7 +128,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         _LOGGER.info("Initial DHCP data refresh completed successfully")
 
         # Create device trackers only (sensors will be created by sensor platform)
-        device_trackers = []
+        device_trackers: list[TechnitiumDHCPDeviceTracker] = []
         if coordinator.data:
             _LOGGER.info(
                 "Processing %d DHCP leases to create device trackers",
@@ -156,18 +166,26 @@ async def async_setup_entry(hass, entry, async_add_entities):
         raise ConfigEntryNotReady from e
 
 
-class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
+class TechnitiumDHCPDeviceTracker(
+    CoordinatorEntity[TechnitiumDHCPCoordinator], ScannerEntity
+):
     """Representation of a TechnitiumDNS DHCP device tracker."""
 
-    def __init__(self, coordinator, lease_data, server_name, entry_id):
+    def __init__(
+        self,
+        coordinator: TechnitiumDHCPCoordinator,
+        lease_data: dict[str, Any],
+        server_name: str,
+        entry_id: str,
+    ) -> None:
         """Initialize the device tracker."""
         _LOGGER.debug("Initializing device tracker for lease: %s", lease_data)
         super().__init__(coordinator)
         self._lease_data = lease_data
         self._server_name = server_name
         self._entry_id = entry_id
-        self._mac_address = lease_data.get("mac_address", "")
-        self._hostname = lease_data.get("hostname", "")
+        self._mac_address: str = lease_data.get("mac_address", "")
+        self._hostname: str = lease_data.get("hostname", "")
 
         # Debug MAC address handling
         _LOGGER.debug(
@@ -178,7 +196,7 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
 
         # Create a friendly name based on hostname first, then MAC
         if self._hostname and self._hostname.strip():
-            self._name = self._hostname.replace(".home.internal", "").replace(
+            self._name: str = self._hostname.replace(".home.internal", "").replace(
                 ".local", ""
             )
         elif self._mac_address:
@@ -186,20 +204,17 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
         else:
             self._name = f"Device_{lease_data.get('ip_address', '').replace('.', '_')}"
 
-        _LOGGER.info(
-            "Created device tracker '%s' for MAC %s (IP: %s)",
-            self._name,
-            self._mac_address,
-            lease_data.get("ip_address"),
-        )
+        # No per-device identifier logging here: async_setup_entry already logs the
+        # aggregate device-tracker count at INFO, and logging names/MACs/IPs would be
+        # both noisy and a clear-text-logging-of-sensitive-data concern.
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the device tracker."""
         return self._name
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         # Use normalized MAC address for consistent unique_id format
         if self._mac_address:
@@ -208,16 +223,16 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
             return f"{self._entry_id}_device_tracker_{mac_clean}"
 
         # Fallback to IP if no MAC available (shouldn't happen in DHCP context)
-        ip_clean = self._lease_data.get("ip_address", "").replace(".", "_")
+        ip_clean = str(self._lease_data.get("ip_address", "")).replace(".", "_")
         return f"{self._entry_id}_device_tracker_ip_{ip_clean}"
 
     @property
-    def source_type(self):
+    def source_type(self) -> SourceType:
         """Return the source type of the device tracker."""
         return SourceType.ROUTER
 
     @property
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Return if the device is connected."""
         # Check if the device still exists in the current coordinator data
         if not self.coordinator.data:
@@ -242,7 +257,7 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
                         lease.get("activity_score", 0),
                         "connected" if is_actively_used else "disconnected",
                     )
-                    return is_actively_used
+                    return bool(is_actively_used)
                 # If DNS log tracking is enabled but smart activity disabled, consider staleness
                 elif lease.get("is_stale") is not None:
                     is_stale = lease.get("is_stale", False)
@@ -266,7 +281,7 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
         return False
 
     @property
-    def ip_address(self):
+    def ip_address(self) -> str | None:
         """Return the IP address of the device."""
         if not self.coordinator.data:
             return None
@@ -277,23 +292,23 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
         return None
 
     @property
-    def mac_address(self):
+    def mac_address(self) -> str:
         """Return the MAC address of the device."""
         return self._mac_address
 
     @property
-    def hostname(self):
+    def hostname(self) -> str:
         """Return the hostname of the device."""
         if not self.coordinator.data:
             return self._hostname
 
         for lease in self.coordinator.data:
             if lease.get("mac_address") == self._mac_address:
-                return lease.get("hostname", self._hostname)
+                return str(lease.get("hostname", self._hostname))
         return self._hostname
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional attributes."""
         attributes = {
             "source": "TechnitiumDNS DHCP",
@@ -313,9 +328,16 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
 
         return attributes
 
-    @property
-    def device_info(self):
-        """Return device information for this entity."""
+    @property  # type: ignore[misc]
+    def device_info(self) -> DeviceInfo:
+        """Return device information for this entity.
+
+        ScannerEntity.device_info is declared ``@final`` (always ``None``) in
+        Home Assistant core because scanner entities are not expected to own
+        a device registry entry. This integration intentionally overrides it
+        to group each DHCP lease under its own device; the override predates
+        that upstream restriction and its runtime behavior must be preserved.
+        """
         # Create proper device registry entry for each DHCP device
         _LOGGER.debug(
             "Device %s: Creating device_info, MAC='%s', has_MAC=%s",
@@ -361,6 +383,6 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
         )
 
     @property
-    def available(self):
+    def available(self) -> bool:
         """Return if the device tracker is available."""
         return self.coordinator.last_update_success

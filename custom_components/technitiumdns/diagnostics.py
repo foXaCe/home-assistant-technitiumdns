@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.diagnostics import async_redact_data
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
 
 TO_REDACT = {"token", "api_url", "username"}
 
@@ -16,9 +18,7 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     runtime_data = getattr(entry, "runtime_data", None)
-    dhcp_coordinator = (
-        runtime_data.coordinators.get("dhcp") if runtime_data else None
-    )
+    dhcp_coordinator = runtime_data.coordinators.get("dhcp") if runtime_data else None
 
     return {
         "entry": {

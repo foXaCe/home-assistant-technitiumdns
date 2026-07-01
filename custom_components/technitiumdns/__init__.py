@@ -3,14 +3,20 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
-from technitiumdns import InvalidTokenError, TransportError
+# The technitiumdns-api client library has the same top-level name as this
+# custom component; mypy's flat module resolution (no `custom_components`
+# package marker) resolves the bare "technitiumdns" name to this integration
+# instead of the installed library, hence the attr-defined false positive.
+from technitiumdns import (  # type: ignore[attr-defined]
+    InvalidTokenError,
+    TransportError,
+)
 
 from .client import create_api_client
 from .config_flow import CONFIG_VERSION
@@ -25,10 +31,14 @@ from .const import (
 from .models import TechnitiumRuntimeData
 from .services import async_register_services
 
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+
 _LOGGER = logging.getLogger(__name__)
 
 
-async def _async_migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry):
+async def _async_migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Migrate the unique_ids of existing sensors to the new format, handling duplicates."""
     _LOGGER.info("Starting unique_id migration for TechnitiumDNS sensors.")
     entity_registry = er.async_get(hass)
@@ -62,7 +72,7 @@ async def _async_migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry):
                         "Found conflicting entity %s with the target unique_id. Removing it to resolve duplication.",
                         conflicting_entity_id,
                     )
-                    entity_registry.async_remove_entity(conflicting_entity_id)
+                    entity_registry.async_remove(conflicting_entity_id)
                 # --- END OF NEW LOGIC ---
 
                 _LOGGER.debug(
@@ -190,9 +200,9 @@ async def _async_migrate_dhcp_unique_ids(
     for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
         uid = entity.unique_id or ""
         if uid.startswith(dhcp_prefix) and not uid.startswith(skip_prefixes):
-            new_uid = f"{entry.entry_id}_dhcp_{uid[len(dhcp_prefix):]}"
+            new_uid = f"{entry.entry_id}_dhcp_{uid[len(dhcp_prefix) :]}"
         elif uid.startswith(tracker_prefix):
-            new_uid = f"{entry.entry_id}_device_tracker_{uid[len(tracker_prefix):]}"
+            new_uid = f"{entry.entry_id}_device_tracker_{uid[len(tracker_prefix) :]}"
         else:
             continue
         if new_uid == uid:

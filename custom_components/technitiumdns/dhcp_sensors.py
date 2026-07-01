@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -14,16 +13,26 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
-from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
+from .coordinator import TechnitiumDHCPCoordinator
 from .utils import (
     manufacturer_from_mac,
     model_from_hostname,
     normalize_mac_address,
     parse_timestamp,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from datetime import datetime
+
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from homeassistant.helpers.typing import StateType
+
+    from .models import TechnitiumConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,9 +41,14 @@ _LOGGER = logging.getLogger(__name__)
 class TechnitiumDHCPSensorDescription(SensorEntityDescription):
     """Describes a TechnitiumDNS DHCP device diagnostic sensor."""
 
-    value_fn: Callable[[dict[str, Any]], StateType]
+    value_fn: Callable[[dict[str, Any]], StateType | datetime]
     icon_fn: Callable[[dict[str, Any]], str] | None = None
     attrs_fn: Callable[[dict[str, Any], Any], dict[str, Any]] | None = None
+
+
+# `utils.parse_timestamp` ships without type annotations (owned by another pass);
+# wrap it once here so call sites are properly typed instead of falling back to `Any`.
+_parse_timestamp: Callable[[str | None], datetime | None] = parse_timestamp
 
 
 def _activity_score_icon(data: dict[str, Any]) -> str:
@@ -87,21 +101,21 @@ DHCP_SENSOR_DESCRIPTIONS: tuple[TechnitiumDHCPSensorDescription, ...] = (
         translation_key="dhcp_lease_obtained",
         device_class=SensorDeviceClass.TIMESTAMP,
         icon="mdi:calendar-clock",
-        value_fn=lambda data: parse_timestamp(data.get("lease_obtained")),
+        value_fn=lambda data: _parse_timestamp(data.get("lease_obtained")),
     ),
     TechnitiumDHCPSensorDescription(
         key="lease_expires",
         translation_key="dhcp_lease_expires",
         device_class=SensorDeviceClass.TIMESTAMP,
         icon="mdi:calendar-remove",
-        value_fn=lambda data: parse_timestamp(data.get("lease_expires")),
+        value_fn=lambda data: _parse_timestamp(data.get("lease_expires")),
     ),
     TechnitiumDHCPSensorDescription(
         key="last_seen",
         translation_key="dhcp_last_seen",
         device_class=SensorDeviceClass.TIMESTAMP,
         icon="mdi:eye-outline",
-        value_fn=lambda data: parse_timestamp(data.get("last_seen")),
+        value_fn=lambda data: _parse_timestamp(data.get("last_seen")),
     ),
     TechnitiumDHCPSensorDescription(
         key="is_stale",
@@ -153,7 +167,12 @@ DHCP_SENSOR_DESCRIPTIONS: tuple[TechnitiumDHCPSensorDescription, ...] = (
 )
 
 
-async def _create_device_sensors(leases, dhcp_coordinator, server_name, entry_id):
+async def _create_device_sensors(
+    leases: list[dict[str, Any]],
+    dhcp_coordinator: TechnitiumDHCPCoordinator,
+    server_name: str,
+    entry_id: str,
+) -> list[TechnitiumDHCPDeviceSensor]:
     """Create diagnostic sensors for a list of device leases."""
     device_sensors: list[TechnitiumDHCPDeviceSensor] = []
 
@@ -190,7 +209,9 @@ async def _create_device_sensors(leases, dhcp_coordinator, server_name, entry_id
     return device_sensors
 
 
-class TechnitiumDHCPDeviceSensor(CoordinatorEntity, SensorEntity):
+class TechnitiumDHCPDeviceSensor(
+    CoordinatorEntity[TechnitiumDHCPCoordinator], SensorEntity
+):
     """A single diagnostic sensor for a DHCP device, driven by a description."""
 
     _attr_has_entity_name = True
@@ -199,13 +220,13 @@ class TechnitiumDHCPDeviceSensor(CoordinatorEntity, SensorEntity):
 
     def __init__(
         self,
-        coordinator,
+        coordinator: TechnitiumDHCPCoordinator,
         description: TechnitiumDHCPSensorDescription,
-        mac_address,
-        server_name,
-        entry_id,
-        device_name,
-    ):
+        mac_address: str,
+        server_name: str,
+        entry_id: str,
+        device_name: str,
+    ) -> None:
         """Initialize the diagnostic sensor."""
         super().__init__(coordinator)
         self.entity_description = description
@@ -228,7 +249,7 @@ class TechnitiumDHCPDeviceSensor(CoordinatorEntity, SensorEntity):
         return None
 
     @property
-    def native_value(self) -> StateType:
+    def native_value(self) -> StateType | datetime:
         """Return the current value from the description's value function."""
         device_data = self._get_device_data()
         if device_data is None:
@@ -284,19 +305,28 @@ class TechnitiumDHCPDeviceSensor(CoordinatorEntity, SensorEntity):
 class DynamicSensorManager:
     """Manager for creating sensors dynamically when new devices are discovered."""
 
-    def __init__(self, hass, entry, async_add_entities, dhcp_coordinator, server_name):
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: TechnitiumConfigEntry,
+        async_add_entities: AddEntitiesCallback,
+        dhcp_coordinator: TechnitiumDHCPCoordinator,
+        server_name: str,
+    ) -> None:
         """Initialize the dynamic sensor manager."""
         self.hass = hass
         self.entry = entry
         self.async_add_entities = async_add_entities
         self.dhcp_coordinator = dhcp_coordinator
         self.server_name = server_name
-        self.known_devices = set()  # Track devices we've already created sensors for
-        self._listener = None
+        self.known_devices: set[str] = (
+            set()
+        )  # Devices we've already created sensors for
+        self._listener: Callable[[], None] | None = None
 
         _LOGGER.debug("Dynamic sensor manager initialized for entry %s", entry.entry_id)
 
-    async def setup(self):
+    async def setup(self) -> None:
         """Set up the dynamic sensor manager."""
         # Track currently known devices using normalized MAC addresses
         if self.dhcp_coordinator.data:
@@ -310,7 +340,7 @@ class DynamicSensorManager:
         # Set up listener for coordinator updates
         if hasattr(self.dhcp_coordinator, "async_add_listener"):
 
-            def _sync_listener():
+            def _sync_listener() -> None:
                 _LOGGER.debug("DHCP COORDINATOR: async listener triggered")
                 self.hass.async_create_task(self._handle_coordinator_update())
 
@@ -341,14 +371,14 @@ class DynamicSensorManager:
             # Force an immediate update to create any missing sensors
             await self._handle_coordinator_update()
 
-    async def _handle_coordinator_update(self):
+    async def _handle_coordinator_update(self) -> None:
         """Handle coordinator data updates and create sensors for new devices."""
         if not self.dhcp_coordinator.data:
             _LOGGER.debug("Dynamic sensor manager: No coordinator data available")
             return
 
-        current_devices = set()
-        new_devices = []
+        current_devices: set[str] = set()
+        new_devices: list[dict[str, Any]] = []
 
         # Process current devices from coordinator
         for lease in self.dhcp_coordinator.data:
@@ -390,7 +420,7 @@ class DynamicSensorManager:
             )
             await self._create_sensors_for_devices(new_devices)
 
-    async def _create_sensors_for_devices(self, devices):
+    async def _create_sensors_for_devices(self, devices: list[dict[str, Any]]) -> None:
         """Create diagnostic sensors for a list of new devices."""
         try:
             new_sensors = await _create_device_sensors(
@@ -416,7 +446,7 @@ class DynamicSensorManager:
                 exc_info=True,
             )
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up the sensor manager."""
         if self._listener:
             self._listener()

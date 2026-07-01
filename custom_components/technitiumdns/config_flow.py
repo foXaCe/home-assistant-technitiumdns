@@ -3,13 +3,21 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING, Any
 
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 import voluptuous as vol
 
-from technitiumdns import InvalidTokenError, TransportError
+# The technitiumdns-api client library has the same top-level name as this
+# custom component; mypy's flat module resolution (no `custom_components`
+# package marker) resolves the bare "technitiumdns" name to this integration
+# instead of the installed library, hence the attr-defined false positive.
+from technitiumdns import (  # type: ignore[attr-defined]
+    InvalidTokenError,
+    TransportError,
+)
 
 from .client import create_api_client
 from .const import (
@@ -36,12 +44,19 @@ from .const import (
     STATS_UPDATE_INTERVAL_OPTIONS,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+
+    from homeassistant.config_entries import ConfigFlowResult
+
 CONFIG_VERSION = 7
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _int_select(options, translation_key: str) -> "selector.SelectSelector":
+def _int_select(
+    options: Iterable[int], translation_key: str
+) -> selector.SelectSelector:
     """Build a translatable dropdown for a list of integer choices.
 
     The option values are stored as strings (Home Assistant selectors are
@@ -63,11 +78,15 @@ class TechnitiumDNSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: config_entries.ConfigEntry):
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
         """Get the options flow for this handler."""
         return TechnitiumDNSOptionsFlowHandler()
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -126,15 +145,21 @@ class TechnitiumDNSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=data_schema, errors=errors
         )
 
-    async def async_step_import(self, user_input):
+    async def async_step_import(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle import from config migration."""
         return await self.async_step_user(user_input)
 
-    async def async_step_reauth(self, entry_data):
+    async def async_step_reauth(
+        self, entry_data: Mapping[str, Any]
+    ) -> ConfigFlowResult:
         """Handle re-authentication after an invalid token."""
         return await self.async_step_reauth_confirm()
 
-    async def async_step_reauth_confirm(self, user_input=None):
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Prompt for a new API token and validate it."""
         errors: dict[str, str] = {}
         reauth_entry = self._get_reauth_entry()
@@ -186,7 +211,9 @@ class TechnitiumDNSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle an options flow for TechnitiumDNS."""
 
-    async def async_step_init(self, user_input=None):
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
             if user_input.get("test_dhcp"):
@@ -285,7 +312,9 @@ class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=options_schema,
         )
 
-    async def async_step_dhcp_test(self, user_input=None):
+    async def async_step_dhcp_test(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Test DHCP connection and display results."""
         if user_input is not None:
             return await self.async_step_init()
