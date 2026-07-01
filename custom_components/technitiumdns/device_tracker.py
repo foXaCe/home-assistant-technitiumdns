@@ -44,9 +44,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
     )
 
     try:
-        config_entry = hass.data[DOMAIN][entry.entry_id]
-        api = config_entry["api"]
-        server_name = config_entry["server_name"]
+        runtime_data = entry.runtime_data
+        api = runtime_data.api
+        server_name = runtime_data.server_name
 
         _LOGGER.debug(
             "Retrieved config entry data: api=%s, server_name=%s", api, server_name
@@ -109,11 +109,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
         )
         _LOGGER.debug("Created TechnitiumDHCPCoordinator: %s", coordinator)
 
-        # Store coordinator in hass.data early so sensor platform can access it
-        if "coordinators" not in hass.data[DOMAIN][entry.entry_id]:
-            hass.data[DOMAIN][entry.entry_id]["coordinators"] = {}
-        hass.data[DOMAIN][entry.entry_id]["coordinators"]["dhcp"] = coordinator
-        _LOGGER.debug("Stored DHCP coordinator in hass.data for sensor platform access")
+        # Store coordinator on the entry so the sensor platform can access it
+        runtime_data.coordinators["dhcp"] = coordinator
+        _LOGGER.debug("Stored DHCP coordinator on entry.runtime_data")
 
         _LOGGER.info("Performing initial DHCP data refresh...")
         await coordinator.async_config_entry_first_refresh()

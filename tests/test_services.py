@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
 from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.technitiumdns.config_flow import CONFIG_VERSION
 from custom_components.technitiumdns.const import DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
 class _Lease:
@@ -119,4 +119,4 @@ async def test_cleanup_devices_runs(hass: HomeAssistant, mock_api) -> None:
         DOMAIN, "cleanup_devices", {"config_entry_id": entry.entry_id}, blocking=True
     )
     await hass.async_block_till_done()
-    assert entry.entry_id in hass.data[DOMAIN]
+    assert entry.runtime_data is not None

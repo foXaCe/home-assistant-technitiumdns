@@ -7,10 +7,10 @@ from unittest.mock import AsyncMock, patch
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.technitiumdns.config_flow import CONFIG_VERSION
 from custom_components.technitiumdns.const import DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
 class _Lease:
@@ -104,7 +104,7 @@ async def test_dhcp_setup_creates_trackers_and_sensors(
     # bug to fix with the runtime_data refactor. Assert the reliable part here.
     assert len(sensors) >= 21
     # the DHCP coordinator was stored and has the processed lease data
-    dhcp = hass.data[DOMAIN][entry.entry_id]["coordinators"]["dhcp"]
+    dhcp = entry.runtime_data.coordinators["dhcp"]
     assert len(dhcp.data) == 2
     assert {d["mac_address"] for d in dhcp.data} == {
         "AA:BB:CC:00:00:01",
@@ -133,6 +133,6 @@ async def test_dhcp_ip_filter_excludes_device(hass: HomeAssistant, mock_api) -> 
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
-    dhcp = hass.data[DOMAIN][entry.entry_id]["coordinators"]["dhcp"]
+    dhcp = entry.runtime_data.coordinators["dhcp"]
     ips = {d["ip_address"] for d in dhcp.data}
     assert ips == {"192.168.1.50"}

@@ -8,8 +8,6 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
-
 TO_REDACT = {"token", "api_url", "username"}
 
 
@@ -17,8 +15,10 @@ async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
-    entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-    dhcp_coordinator = entry_data.get("coordinators", {}).get("dhcp")
+    runtime_data = getattr(entry, "runtime_data", None)
+    dhcp_coordinator = (
+        runtime_data.coordinators.get("dhcp") if runtime_data else None
+    )
 
     return {
         "entry": {
@@ -26,9 +26,9 @@ async def async_get_config_entry_diagnostics(
             "data": async_redact_data(dict(entry.data), TO_REDACT),
             "options": async_redact_data(dict(entry.options), TO_REDACT),
         },
-        "server_name": entry_data.get("server_name"),
-        "stats_duration": entry_data.get("stats_duration"),
-        "loaded_platforms": entry_data.get("loaded_platforms"),
+        "server_name": runtime_data.server_name if runtime_data else None,
+        "stats_duration": runtime_data.stats_duration if runtime_data else None,
+        "loaded_platforms": runtime_data.loaded_platforms if runtime_data else None,
         "dhcp": {
             "enabled": dhcp_coordinator is not None,
             "last_update_success": (

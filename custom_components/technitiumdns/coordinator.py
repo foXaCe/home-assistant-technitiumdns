@@ -20,6 +20,7 @@ from .dns_logs import (
     get_last_seen_for_multiple_ips,
     test_dns_logs_api,
 )
+from .models import async_loaded_runtime_data
 from .services import async_cleanup_orphaned_entities
 from .utils import normalize_mac_address, should_track_ip
 
@@ -174,10 +175,10 @@ class TechnitiumDHCPCoordinator(DataUpdateCoordinator):
     async def _cleanup_orphaned_entities(self, current_macs: set):
         """Clean up entities for devices that no longer match current criteria."""
         try:
-            # Get config entry ID from hass data
+            # Find the config entry that owns this coordinator
             entry_id = None
-            for eid, data in self.hass.data.get(DOMAIN, {}).items():
-                if data.get("coordinators", {}).get("dhcp") == self:
+            for eid, runtime_data in async_loaded_runtime_data(self.hass).items():
+                if runtime_data.coordinators.get("dhcp") is self:
                     entry_id = eid
                     break
 

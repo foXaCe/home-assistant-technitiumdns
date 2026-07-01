@@ -5,10 +5,10 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.technitiumdns import system_health as sh
 from custom_components.technitiumdns.const import DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
 async def test_system_health_info(hass: HomeAssistant) -> None:

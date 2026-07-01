@@ -17,7 +17,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     CONF_STATS_UPDATE_INTERVAL,
     DEFAULT_STATS_UPDATE_INTERVAL,
-    DOMAIN,
 )
 from .coordinator import TechnitiumDNSCoordinator
 from .dhcp_sensors import DynamicSensorManager, _create_device_sensors
@@ -34,10 +33,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
         _LOGGER.info(
             "Setting up TechnitiumDNS sensor platform for entry %s", entry.entry_id
         )
-        config_entry = hass.data[DOMAIN][entry.entry_id]
-        api = config_entry["api"]
-        server_name = config_entry["server_name"]
-        stats_duration = config_entry["stats_duration"]
+        runtime_data = entry.runtime_data
+        api = runtime_data.api
+        server_name = runtime_data.server_name
+        stats_duration = runtime_data.stats_duration
 
         # Create main DNS statistics coordinator and sensors
         update_interval = int(
@@ -58,7 +57,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
         # Create device diagnostic sensors if DHCP coordinator is available
         dhcp_coordinator = None
-        coordinators = hass.data[DOMAIN][entry.entry_id].get("coordinators", {})
+        coordinators = runtime_data.coordinators
         _LOGGER.debug(
             "Checking for DHCP coordinator in coordinators: %s", coordinators.keys()
         )
@@ -124,8 +123,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 await sensor_manager._handle_coordinator_update()
 
             # Store sensor manager for cleanup
-            if "sensor_manager" not in hass.data[DOMAIN][entry.entry_id]:
-                hass.data[DOMAIN][entry.entry_id]["sensor_manager"] = sensor_manager
+            if runtime_data.sensor_manager is None:
+                runtime_data.sensor_manager = sensor_manager
 
     except Exception as e:
         _LOGGER.error(
@@ -136,7 +135,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 async def async_unload_entry(hass, entry):
     """Unload sensor platform and clean up dynamic sensor manager."""
-    if sensor_manager := hass.data[DOMAIN][entry.entry_id].get("sensor_manager"):
+    runtime_data = getattr(entry, "runtime_data", None)
+    if runtime_data and (sensor_manager := runtime_data.sensor_manager):
         sensor_manager.cleanup()
         _LOGGER.info("Dynamic sensor manager cleaned up for entry %s", entry.entry_id)
 

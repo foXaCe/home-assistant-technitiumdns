@@ -1,8 +1,8 @@
 """Utility functions for TechnitiumDNS integration."""
 
+from datetime import datetime
 import ipaddress
 import logging
-from datetime import datetime
 from typing import Set
 
 from homeassistant.helpers.entity import DeviceInfo

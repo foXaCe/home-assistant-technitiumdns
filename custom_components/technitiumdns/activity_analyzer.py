@@ -4,17 +4,17 @@ This module implements intelligent activity scoring that can distinguish between
 genuine user activity and automated background traffic patterns.
 """
 
-import logging
 from datetime import datetime, timedelta
-from typing import Dict, List
+import logging
 import re
+from typing import Dict, List
 
 from .const import (
     BACKGROUND_DOMAINS,
+    DEFAULT_ACTIVITY_ANALYSIS_WINDOW,
+    DEFAULT_ACTIVITY_SCORE_THRESHOLD,
     PROTOCOL_WEIGHTS,
     QUERY_TYPE_WEIGHTS,
-    DEFAULT_ACTIVITY_SCORE_THRESHOLD,
-    DEFAULT_ACTIVITY_ANALYSIS_WINDOW,
 )
 
 _LOGGER = logging.getLogger(__name__)

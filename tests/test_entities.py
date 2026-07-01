@@ -5,10 +5,10 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.technitiumdns.config_flow import CONFIG_VERSION
 from custom_components.technitiumdns.const import DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
 async def _setup(hass: HomeAssistant, mock_api):
