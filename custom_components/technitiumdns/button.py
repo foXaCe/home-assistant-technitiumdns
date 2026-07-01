@@ -3,16 +3,28 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.button import ButtonEntity
 
 from .const import AD_BLOCKING_DURATION_OPTIONS, DOMAIN
 from .utils import server_device_info
 
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity import DeviceInfo
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from .models import TechnitiumConfigEntry
+
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: TechnitiumConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up TechnitiumDNS button entities based on a config entry."""
     runtime_data = entry.runtime_data
     api = runtime_data.api
@@ -20,7 +32,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
     sorted_durations = sorted(AD_BLOCKING_DURATION_OPTIONS.keys())
 
-    buttons = [
+    buttons: list[TechnitiumDNSButton | TechnitiumDNSCleanupButton] = [
         TechnitiumDNSButton(api, duration, server_name, entry)
         for duration in sorted_durations
     ]
@@ -37,7 +49,13 @@ class TechnitiumDNSButton(ButtonEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, api, duration: int, server_name: str, entry):
+    def __init__(
+        self,
+        api: Any,
+        duration: int,
+        server_name: str,
+        entry: TechnitiumConfigEntry,
+    ) -> None:
         """Initialize the button."""
         self._api = api
         self._entry = entry
@@ -70,7 +88,7 @@ class TechnitiumDNSButton(ButtonEntity):
             _LOGGER.error("Failed to disable ad blocking: %s", err)
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         """Return device information for this entity."""
         return server_device_info(self._entry.entry_id, self._server_name)
 
@@ -80,7 +98,7 @@ class TechnitiumDNSCleanupButton(ButtonEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, server_name: str, entry):
+    def __init__(self, server_name: str, entry: TechnitiumConfigEntry) -> None:
         """Initialize the cleanup button."""
         self._server_name = server_name
         self._entry = entry
@@ -101,6 +119,6 @@ class TechnitiumDNSCleanupButton(ButtonEntity):
             _LOGGER.error("Failed to trigger device cleanup: %s", err)
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         """Return device information for this entity."""
         return server_device_info(self._entry.entry_id, self._server_name)

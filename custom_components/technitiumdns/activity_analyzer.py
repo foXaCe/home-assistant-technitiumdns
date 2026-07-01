@@ -4,10 +4,12 @@ This module implements intelligent activity scoring that can distinguish between
 genuine user activity and automated background traffic patterns.
 """
 
-from datetime import datetime, timedelta
+from __future__ import annotations
+
+from datetime import UTC, datetime, timedelta
 import logging
 import re
-from typing import Dict, List
+from typing import Any
 
 from .const import (
     BACKGROUND_DOMAINS,
@@ -37,7 +39,9 @@ class SmartActivityAnalyzer:
         self.score_threshold = score_threshold
         self.analysis_window_minutes = analysis_window_minutes
 
-    def analyze_device_activity(self, dns_logs: List[Dict], ip_address: str) -> Dict:
+    def analyze_device_activity(
+        self, dns_logs: list[dict[str, Any]], ip_address: str
+    ) -> dict[str, Any]:
         """Analyze DNS logs for a device and calculate activity score.
 
         Args:
@@ -86,7 +90,7 @@ class SmartActivityAnalyzer:
             background_queries / total_queries if total_queries > 0 else 0
         )
 
-        protocols_used = set(log.get("protocol", "UDP") for log in device_logs)
+        protocols_used = {log.get("protocol", "UDP") for log in device_logs}
         protocol_diversity = len(protocols_used)
 
         # Calculate query rate (queries per minute)
@@ -132,12 +136,13 @@ class SmartActivityAnalyzer:
             },
         }
 
-    def _filter_device_logs(self, dns_logs: List[Dict], ip_address: str) -> List[Dict]:
+    def _filter_device_logs(
+        self, dns_logs: list[dict[str, Any]], ip_address: str
+    ) -> list[dict[str, Any]]:
         """Filter DNS logs for a specific device within the analysis window."""
-        from datetime import timezone
 
         # Use UTC time for consistent comparison with log timestamps
-        cutoff_time = datetime.now(timezone.utc) - timedelta(
+        cutoff_time = datetime.now(UTC) - timedelta(
             minutes=self.analysis_window_minutes
         )
 
@@ -172,7 +177,7 @@ class SmartActivityAnalyzer:
 
                 # Ensure we are comparing in UTC
                 if log_time.tzinfo is None:
-                    log_time = log_time.replace(tzinfo=timezone.utc)
+                    log_time = log_time.replace(tzinfo=UTC)
 
                 if log_time >= cutoff_time:
                     device_logs.append(log)
@@ -181,7 +186,7 @@ class SmartActivityAnalyzer:
 
         return device_logs
 
-    def _calculate_background_score(self, device_logs: List[Dict]) -> float:
+    def _calculate_background_score(self, device_logs: list[dict[str, Any]]) -> float:
         """Calculate score based on background vs user traffic ratio."""
         if not device_logs:
             return 0
@@ -201,7 +206,7 @@ class SmartActivityAnalyzer:
         # Score increases with user content ratio
         return min(user_ratio * 100, 100)
 
-    def _calculate_protocol_score(self, device_logs: List[Dict]) -> float:
+    def _calculate_protocol_score(self, device_logs: list[dict[str, Any]]) -> float:
         """Calculate score based on protocol mix (TCP vs UDP)."""
         if not device_logs:
             return 0
@@ -215,7 +220,7 @@ class SmartActivityAnalyzer:
         average_protocol_score = sum(protocol_scores) / len(protocol_scores)
         return min(average_protocol_score * 100, 100)
 
-    def _calculate_diversity_score(self, device_logs: List[Dict]) -> float:
+    def _calculate_diversity_score(self, device_logs: list[dict[str, Any]]) -> float:
         """Calculate score based on domain and query type diversity."""
         if not device_logs:
             return 0
@@ -240,7 +245,7 @@ class SmartActivityAnalyzer:
         diversity_score = (domain_diversity + type_diversity) / 2 * 100
         return min(diversity_score, 100)
 
-    def _calculate_frequency_score(self, device_logs: List[Dict]) -> float:
+    def _calculate_frequency_score(self, device_logs: list[dict[str, Any]]) -> float:
         """Calculate score based on query frequency patterns."""
         if not device_logs:
             return 0
@@ -255,6 +260,7 @@ class SmartActivityAnalyzer:
 
         # Optimal range: 0.5-5 queries per minute
         # Too low = likely background, too high = likely automated
+        score: float
         if 0.5 <= queries_per_minute <= 5:
             score = 100
         elif queries_per_minute < 0.5:
@@ -265,12 +271,10 @@ class SmartActivityAnalyzer:
 
         return min(max(score, 0), 100)
 
-    def _calculate_timing_score(self, device_logs: List[Dict]) -> float:
+    def _calculate_timing_score(self, device_logs: list[dict[str, Any]]) -> float:
         """Calculate score based on timing patterns (human vs automated)."""
         if len(device_logs) < 3:
             return 50  # Not enough data for timing analysis
-
-        from datetime import timezone
 
         # Parse timestamps and calculate intervals
         timestamps = []
@@ -285,7 +289,7 @@ class SmartActivityAnalyzer:
                     else:
                         timestamp = datetime.fromisoformat(time_str)
                         if timestamp.tzinfo is None:
-                            timestamp = timestamp.replace(tzinfo=timezone.utc)
+                            timestamp = timestamp.replace(tzinfo=UTC)
                     timestamps.append(timestamp)
                 except (ValueError, AttributeError):
                     continue
@@ -326,7 +330,7 @@ class SmartActivityAnalyzer:
 
         return min(max(score, 0), 100)
 
-    def _is_background_query(self, log: Dict) -> bool:
+    def _is_background_query(self, log: dict[str, Any]) -> bool:
         """Determine if a DNS query is likely background/automated traffic."""
         domain = log.get("question", {}).get("name", "").lower()
         query_type = log.get("question", {}).get("type", "")
@@ -342,10 +346,7 @@ class SmartActivityAnalyzer:
             return True
 
         # Check for patterns indicating automated queries
-        if self._is_automated_pattern(domain):
-            return True
-
-        return False
+        return bool(self._is_automated_pattern(domain))
 
     def _is_automated_pattern(self, domain: str) -> bool:
         """Check if domain matches automated query patterns."""
@@ -358,14 +359,10 @@ class SmartActivityAnalyzer:
             return True
 
         # Version/build numbers in domain
-        if re.search(r"v\d+\.|version\d+\.", domain):
-            return True
+        return bool(re.search(r"v\d+\.|version\d+\.", domain))
 
-        return False
-
-    def _get_time_span_minutes(self, device_logs: List[Dict]) -> float:
+    def _get_time_span_minutes(self, device_logs: list[dict[str, Any]]) -> float:
         """Get time span of logs in minutes."""
-        from datetime import timezone
 
         timestamps = []
         for log in device_logs:
@@ -379,7 +376,7 @@ class SmartActivityAnalyzer:
                     else:
                         timestamp = datetime.fromisoformat(time_str)
                         if timestamp.tzinfo is None:
-                            timestamp = timestamp.replace(tzinfo=timezone.utc)
+                            timestamp = timestamp.replace(tzinfo=UTC)
                     timestamps.append(timestamp)
                 except (ValueError, AttributeError):
                     continue
@@ -411,8 +408,10 @@ class SmartActivityAnalyzer:
 
 
 def analyze_batch_device_activity(
-    dns_logs: List[Dict], device_ips: List[str], analyzer: SmartActivityAnalyzer
-) -> Dict[str, Dict]:
+    dns_logs: list[dict[str, Any]],
+    device_ips: list[str],
+    analyzer: SmartActivityAnalyzer,
+) -> dict[str, dict[str, Any]]:
     """Analyze activity for multiple devices in batch.
 
     Args:

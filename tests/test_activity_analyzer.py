@@ -76,7 +76,10 @@ def test_high_diversity_scores_higher_than_single_domain() -> None:
 
 
 def test_batch_analysis() -> None:
-    logs = [_log("192.168.1.10", "a.example.com"), _log("192.168.1.11", "b.example.com")]
+    logs = [
+        _log("192.168.1.10", "a.example.com"),
+        _log("192.168.1.11", "b.example.com"),
+    ]
     results = analyze_batch_device_activity(
         logs, ["192.168.1.10", "192.168.1.11", "192.168.1.12"], _analyzer()
     )

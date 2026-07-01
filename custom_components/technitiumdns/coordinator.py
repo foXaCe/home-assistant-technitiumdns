@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timedelta
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
@@ -23,6 +21,9 @@ from .dns_logs import (
 from .models import async_loaded_runtime_data
 from .services import async_cleanup_orphaned_entities
 from .utils import normalize_mac_address, should_track_ip
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ class TechnitiumDNSCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self._cached_update_info = update_result
                     self._last_update_check = current_time
                     _LOGGER.debug("Update check completed, cached for next hour")
-                except (TransportError, asyncio.TimeoutError) as update_err:
+                except (TimeoutError, TransportError) as update_err:
                     _LOGGER.warning(
                         "Failed to check for updates: %s, using cached data",
                         update_err,
@@ -83,7 +84,10 @@ class TechnitiumDNSCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 _LOGGER.debug("Using cached update info")
 
             if update_result is None:
-                update_available = DEFAULT_UPDATE_INFO["response"]["updateAvailable"]
+                default_response = cast(
+                    "dict[str, Any]", DEFAULT_UPDATE_INFO["response"]
+                )
+                update_available = default_response["updateAvailable"]
             else:
                 update_available = update_result.update_available
 
@@ -127,22 +131,22 @@ class TechnitiumDNSCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Error fetching data: {err}") from err
 
 
-class TechnitiumDHCPCoordinator(DataUpdateCoordinator):
+class TechnitiumDHCPCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
     """Class to manage fetching TechnitiumDNS DHCP data."""
 
     def __init__(
         self,
-        hass,
-        api,
-        update_interval,
-        ip_filter_mode="disabled",
-        ip_ranges="",
-        log_tracking=False,
-        stale_threshold=60,
-        smart_activity=True,
-        activity_threshold=25,
-        analysis_window=30,
-    ):
+        hass: HomeAssistant,
+        api: Any,
+        update_interval: int,
+        ip_filter_mode: str = "disabled",
+        ip_ranges: str = "",
+        log_tracking: bool = False,
+        stale_threshold: int = 60,
+        smart_activity: bool = True,
+        activity_threshold: int = 25,
+        analysis_window: int = 30,
+    ) -> None:
         """Initialize."""
         _LOGGER.info(
             "Initializing TechnitiumDHCPCoordinator with interval=%s, filter_mode=%s, log_tracking=%s, stale_threshold=%s, smart_activity=%s, activity_threshold=%s, analysis_window=%s",
@@ -172,7 +176,7 @@ class TechnitiumDHCPCoordinator(DataUpdateCoordinator):
         )
         _LOGGER.info("TechnitiumDHCPCoordinator initialized successfully")
 
-    async def _cleanup_orphaned_entities(self, current_macs: set):
+    async def _cleanup_orphaned_entities(self, current_macs: set[str]) -> None:
         """Clean up entities for devices that no longer match current criteria."""
         try:
             # Find the config entry that owns this coordinator
@@ -189,7 +193,7 @@ class TechnitiumDHCPCoordinator(DataUpdateCoordinator):
         except Exception as e:
             _LOGGER.error("Error during entity cleanup: %s", e, exc_info=True)
 
-    async def _async_update_data(self):
+    async def _async_update_data(self) -> list[dict[str, Any]]:
         """Update data via library."""
         _LOGGER.info("Starting DHCP data update cycle")
         try:
@@ -235,13 +239,11 @@ class TechnitiumDHCPCoordinator(DataUpdateCoordinator):
                     skip_reason = "no MAC address"
                 else:
                     # Accept lease types according to Technitium DNS API docs
-                    if lease_type == "Dynamic":
-                        should_include = True
-                        # _LOGGER.debug("Including Dynamic lease")
-                    elif lease_type == "Reserved":
-                        should_include = True
-                        # _LOGGER.debug("Including Reserved lease")
-                    elif not lease_type:  # Type might be empty/null
+                    if (
+                        lease_type == "Dynamic"
+                        or lease_type == "Reserved"
+                        or not lease_type
+                    ):
                         should_include = True
                         # _LOGGER.debug("Including lease with empty type (assuming dynamic)")
                     else:
@@ -349,7 +351,9 @@ class TechnitiumDHCPCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Error fetching DHCP data: %s", err, exc_info=True)
             raise UpdateFailed(f"Error fetching DHCP data: {err}") from err
 
-    async def _get_last_seen_for_devices(self, processed_leases):
+    async def _get_last_seen_for_devices(
+        self, processed_leases: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Query DNS logs to get last seen times and activity analysis for devices."""
         if not self.log_tracking:
             _LOGGER.debug("DNS log tracking disabled, skipping last seen queries")
@@ -479,7 +483,9 @@ class TechnitiumDHCPCoordinator(DataUpdateCoordinator):
 
         return processed_leases
 
-    async def _perform_basic_last_seen_tracking(self, ip_addresses, ip_to_lease_map):
+    async def _perform_basic_last_seen_tracking(
+        self, ip_addresses: list[str], ip_to_lease_map: dict[str, dict[str, Any]]
+    ) -> None:
         """Perform basic last seen tracking without smart activity analysis."""
         _LOGGER.info(
             "Performing basic last seen tracking for %d devices", len(ip_addresses)

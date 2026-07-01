@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 import logging
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.event import async_track_time_interval
@@ -12,12 +13,23 @@ from homeassistant.util import dt as dt_util
 from .const import DOMAIN
 from .utils import server_device_info
 
+if TYPE_CHECKING:
+    from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant
+    from homeassistant.helpers.entity import DeviceInfo
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from .models import TechnitiumConfigEntry
+
 _LOGGER = logging.getLogger(__name__)
 
 BLOCKING_POLL_INTERVAL = timedelta(seconds=30)
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: TechnitiumConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up TechnitiumDNS switch entities based on a config entry."""
     runtime_data = entry.runtime_data
     switches = [TechnitiumDNSSwitch(runtime_data.api, runtime_data.server_name, entry)]
@@ -29,7 +41,9 @@ class TechnitiumDNSSwitch(SwitchEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, api, server_name: str, entry):
+    def __init__(
+        self, api: Any, server_name: str, entry: TechnitiumConfigEntry
+    ) -> None:
         """Initialize the switch."""
         self._api = api
         self._entry = entry
@@ -38,17 +52,17 @@ class TechnitiumDNSSwitch(SwitchEntity):
         self._is_on = False
         self._temporary_disable_until: datetime | None = None
         self._attr_unique_id = f"{entry.entry_id}_ad_blocking"
-        self._unsub_poll = None
+        self._unsub_poll: CALLBACK_TYPE | None = None
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return the state of the switch."""
         return self._is_on
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return extra state attributes."""
-        attrs = {}
+        attrs: dict[str, Any] = {}
         if self._temporary_disable_until:
             attrs["temporary_disable_until"] = self._temporary_disable_until.isoformat()
         return attrs
@@ -71,7 +85,7 @@ class TechnitiumDNSSwitch(SwitchEntity):
         self._temporary_disable_until = until
         return True
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """When entity is added to hass."""
         await self._fetch_state()
         self._unsub_poll = async_track_time_interval(
@@ -86,22 +100,22 @@ class TechnitiumDNSSwitch(SwitchEntity):
             )
         )
 
-    async def _async_handle_blocking_changed(self, event):
+    async def _async_handle_blocking_changed(self, event: Event[Any]) -> None:
         """Refresh when a temporary-disable button is pressed."""
         if event.data.get("config_entry_id") == self._entry.entry_id:
             await self._fetch_state()
 
-    async def async_will_remove_from_hass(self):
+    async def async_will_remove_from_hass(self) -> None:
         """Cancel polling when removed."""
         if self._unsub_poll:
             self._unsub_poll()
             self._unsub_poll = None
 
-    async def _async_poll_blocking_state(self, _now=None):
+    async def _async_poll_blocking_state(self, _now: datetime | None = None) -> None:
         """Periodically refresh blocking state from the server."""
         await self._fetch_state()
 
-    async def _fetch_state(self):
+    async def _fetch_state(self) -> None:
         """Fetch the current effective ad blocking state."""
         try:
             settings = await self._api.settings.get()
@@ -109,7 +123,9 @@ class TechnitiumDNSSwitch(SwitchEntity):
             if until and isinstance(until, str):
                 until = dt_util.parse_datetime(until)
             self._temporary_disable_until = (
-                until if self._is_temporarily_disabled() else None
+                until  # type: ignore[assignment]  # narrowed to datetime|None at runtime
+                if self._is_temporarily_disabled()
+                else None
             )
 
             effective_on = (
@@ -123,7 +139,7 @@ class TechnitiumDNSSwitch(SwitchEntity):
         except Exception as err:
             _LOGGER.error("Failed to fetch ad blocking state: %s", err)
 
-    async def async_turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         try:
             await self._api.settings.set(settings={"enableBlocking": True})
@@ -135,7 +151,7 @@ class TechnitiumDNSSwitch(SwitchEntity):
         except Exception as err:
             _LOGGER.error("Failed to enable ad blocking: %s", err)
 
-    async def async_turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         try:
             await self._api.settings.set(settings={"enableBlocking": False})
@@ -148,6 +164,6 @@ class TechnitiumDNSSwitch(SwitchEntity):
             _LOGGER.error("Failed to disable ad blocking: %s", err)
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         """Return device information for this entity."""
         return server_device_info(self._entry.entry_id, self._server_name)

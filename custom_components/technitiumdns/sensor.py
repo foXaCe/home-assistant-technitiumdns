@@ -10,7 +10,10 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -18,8 +21,9 @@ from .const import (
     CONF_STATS_UPDATE_INTERVAL,
     DEFAULT_STATS_UPDATE_INTERVAL,
 )
-from .coordinator import TechnitiumDNSCoordinator
+from .coordinator import TechnitiumDHCPCoordinator, TechnitiumDNSCoordinator
 from .dhcp_sensors import DynamicSensorManager, _create_device_sensors
+from .models import TechnitiumConfigEntry
 from .utils import server_device_info
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,7 +31,11 @@ _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL = timedelta(minutes=1)
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: TechnitiumConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up TechnitiumDNS sensors: main DNS statistics and device diagnostic sensors."""
     try:
         _LOGGER.info(
@@ -40,23 +48,21 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
         # Create main DNS statistics coordinator and sensors
         update_interval = int(
-            entry.options.get(
-                CONF_STATS_UPDATE_INTERVAL, DEFAULT_STATS_UPDATE_INTERVAL
-            )
+            entry.options.get(CONF_STATS_UPDATE_INTERVAL, DEFAULT_STATS_UPDATE_INTERVAL)
         )
         coordinator = TechnitiumDNSCoordinator(
             hass, api, stats_duration, update_interval=update_interval
         )
         await coordinator.async_config_entry_first_refresh()
 
-        sensors = [
+        sensors: list[SensorEntity] = [
             TechnitiumDNSSensor(coordinator, description, server_name, entry.entry_id)
             for description in SENSOR_DESCRIPTIONS
         ]
         _LOGGER.info("Created %d main DNS statistics sensors", len(sensors))
 
         # Create device diagnostic sensors if DHCP coordinator is available
-        dhcp_coordinator = None
+        dhcp_coordinator: TechnitiumDHCPCoordinator | None = None
         coordinators = runtime_data.coordinators
         _LOGGER.debug(
             "Checking for DHCP coordinator in coordinators: %s", coordinators.keys()
@@ -133,7 +139,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         raise ConfigEntryNotReady from e
 
 
-async def async_unload_entry(hass, entry):
+async def async_unload_entry(hass: HomeAssistant, entry: TechnitiumConfigEntry) -> bool:
     """Unload sensor platform and clean up dynamic sensor manager."""
     runtime_data = getattr(entry, "runtime_data", None)
     if runtime_data and (sensor_manager := runtime_data.sensor_manager):
@@ -169,6 +175,21 @@ def _top_table(data: dict[str, Any], key: str, label: str) -> dict[str, Any]:
     }
 
 
+def _stat_value_fn(key: str) -> Callable[[dict[str, Any]], StateType]:
+    """Bind ``key`` for a statistics sensor's value function.
+
+    A plain lambda with a ``key=key`` default argument defeats mypy's
+    bidirectional type inference, so the binding is done via a small typed
+    factory instead.
+    """
+    return lambda data: _stat_value(data, key)
+
+
+def _top_attrs_fn(key: str, label: str) -> Callable[[dict[str, Any]], dict[str, Any]]:
+    """Bind ``key``/``label`` for a top-N sensor's attrs function."""
+    return lambda data: _top_table(data, key, label)
+
+
 _MEASUREMENT_KEYS = (
     "queries",
     "blocked_queries",
@@ -200,7 +221,7 @@ SENSOR_DESCRIPTIONS: tuple[TechnitiumSensorDescription, ...] = (
             key=key,
             translation_key=key,
             state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda data, k=key: _stat_value(data, k),
+            value_fn=_stat_value_fn(key),
         )
         for key in _MEASUREMENT_KEYS
     ),
@@ -217,21 +238,27 @@ SENSOR_DESCRIPTIONS: tuple[TechnitiumSensorDescription, ...] = (
         TechnitiumSensorDescription(
             key=key,
             translation_key=key,
-            value_fn=lambda data, k=key: _stat_value(data, k),
-            attrs_fn=lambda data, k=key, lbl=label: _top_table(data, k, lbl),
+            value_fn=_stat_value_fn(key),
+            attrs_fn=_top_attrs_fn(key, label),
         )
         for key, label in _TOP_KEYS.items()
     ),
 )
 
 
-class TechnitiumDNSSensor(CoordinatorEntity, SensorEntity):
+class TechnitiumDNSSensor(CoordinatorEntity[TechnitiumDNSCoordinator], SensorEntity):
     """Representation of a TechnitiumDNS statistics sensor."""
 
     _attr_has_entity_name = True
     entity_description: TechnitiumSensorDescription
 
-    def __init__(self, coordinator, description, server_name, entry_id):
+    def __init__(
+        self,
+        coordinator: TechnitiumDNSCoordinator,
+        description: TechnitiumSensorDescription,
+        server_name: str,
+        entry_id: str,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self.entity_description = description
@@ -252,7 +279,7 @@ class TechnitiumDNSSensor(CoordinatorEntity, SensorEntity):
         return self.entity_description.attrs_fn(self.coordinator.data)
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         """Return device information for this entity."""
         return server_device_info(self._entry_id, self._server_name)
 

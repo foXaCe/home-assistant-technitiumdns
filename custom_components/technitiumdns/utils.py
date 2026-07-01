@@ -1,9 +1,10 @@
 """Utility functions for TechnitiumDNS integration."""
 
+from __future__ import annotations
+
 from datetime import datetime
 import ipaddress
 import logging
-from typing import Set
 
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import dt as dt_util
@@ -52,7 +53,7 @@ def normalize_mac_address(mac_address: str) -> str:
         return mac_upper  # Keep as-is if unexpected format
 
 
-def parse_ip_ranges(ip_ranges_str: str) -> Set[str]:
+def parse_ip_ranges(ip_ranges_str: str) -> set[str]:
     """
     Parse IP ranges string into a set of IP addresses.
 
@@ -68,7 +69,7 @@ def parse_ip_ranges(ip_ranges_str: str) -> Set[str]:
     Returns:
         Set of individual IP addresses as strings
     """
-    ip_set = set()
+    ip_set: set[str] = set()
 
     if not ip_ranges_str or not ip_ranges_str.strip():
         return ip_set
@@ -168,7 +169,7 @@ def should_track_ip(ip_address: str, filter_mode: str, ip_ranges_str: str) -> bo
     return True
 
 
-def parse_timestamp(timestamp_str):
+def parse_timestamp(timestamp_str: str | None) -> datetime | None:
     """Parse a timestamp string to a datetime object.
 
     TechnitiumDNS API returns timestamps in various formats.

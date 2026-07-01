@@ -3,16 +3,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
-from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 
 if TYPE_CHECKING:
-    from technitiumdns import AsyncClient
+    # The technitiumdns-api client library has the same top-level name as this
+    # custom component; mypy's flat module resolution (no `custom_components`
+    # package marker) resolves the bare "technitiumdns" name to this
+    # integration instead of the installed library, hence the attr-defined
+    # false positive.
+    from datetime import datetime
+
+    from homeassistant.core import HomeAssistant
+
+    from technitiumdns import AsyncClient  # type: ignore[attr-defined]
 
 
 @dataclass

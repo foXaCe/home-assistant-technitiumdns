@@ -81,9 +81,7 @@ async def test_get_dhcp_leases_fires_event(hass: HomeAssistant, mock_api) -> Non
     await _setup(hass, mock_api)
 
     events = []
-    hass.bus.async_listen(
-        f"{DOMAIN}_dhcp_leases_retrieved", lambda e: events.append(e)
-    )
+    hass.bus.async_listen(f"{DOMAIN}_dhcp_leases_retrieved", lambda e: events.append(e))
 
     await hass.services.async_call(DOMAIN, "get_dhcp_leases", {}, blocking=True)
     await hass.async_block_till_done()
@@ -99,9 +97,7 @@ async def test_get_dhcp_leases_filter_scope_no_match(
     await _setup(hass, mock_api)
 
     events = []
-    hass.bus.async_listen(
-        f"{DOMAIN}_dhcp_leases_retrieved", lambda e: events.append(e)
-    )
+    hass.bus.async_listen(f"{DOMAIN}_dhcp_leases_retrieved", lambda e: events.append(e))
 
     await hass.services.async_call(
         DOMAIN, "get_dhcp_leases", {"filter_scope": "10.0.0.0/8"}, blocking=True
