@@ -6,8 +6,7 @@ and are automatically linked to the device through proper device grouping.
 """
 import logging
 
-from homeassistant.components.device_tracker.config_entry import ScannerEntity
-from homeassistant.components.device_tracker.const import SourceType
+from homeassistant.components.device_tracker import ScannerEntity, SourceType
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
