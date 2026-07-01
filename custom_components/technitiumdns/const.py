@@ -18,11 +18,6 @@ CONF_STATS_UPDATE_INTERVAL = "stats_update_interval"
 DEFAULT_STATS_UPDATE_INTERVAL = 60
 STATS_UPDATE_INTERVAL_OPTIONS = [30, 60, 120, 300]
 
-# Shared entry-data key for temporary ad-blocking disable expiry
-KEY_BLOCKING_DISABLED_UNTIL = "blocking_disabled_until"
-
-AD_BLOCKING_SWITCH = "Enable Ad Blocking"
-
 AD_BLOCKING_DURATION_OPTIONS = {
     5: "Disable Ad Blocking for 5 Minutes",
     10: "Disable Ad Blocking for 10 Minutes",

@@ -6,11 +6,11 @@ from unittest.mock import AsyncMock, patch
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
-from technitiumdns import InvalidTokenError, TransportError
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.technitiumdns.config_flow import CONFIG_VERSION
 from custom_components.technitiumdns.const import DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from technitiumdns import InvalidTokenError, TransportError
 
 
 def _patch_client(**kwargs):
@@ -29,13 +29,12 @@ async def test_setup_and_unload(hass: HomeAssistant, config_entry, mock_api) -> 
         await hass.async_block_till_done()
 
     assert config_entry.state is ConfigEntryState.LOADED
-    assert config_entry.entry_id in hass.data[DOMAIN]
-    assert hass.data[DOMAIN][config_entry.entry_id]["api"] is mock_api
+    assert config_entry.runtime_data is not None
+    assert config_entry.runtime_data.api is mock_api
 
     assert await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()
     assert config_entry.state is ConfigEntryState.NOT_LOADED
-    assert config_entry.entry_id not in hass.data[DOMAIN]
 
 
 async def test_setup_auth_failed(hass: HomeAssistant, config_entry) -> None:

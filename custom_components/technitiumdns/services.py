@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import logging
 
-import voluptuous as vol
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 
 from .const import DOMAIN
+from .models import async_loaded_runtime_data
 from .utils import normalize_mac_address
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,17 +28,15 @@ async def async_register_services(hass: HomeAssistant):
             "Cleanup service called with config_entry_id: %s", config_entry_id
         )
 
+        runtime_map = async_loaded_runtime_data(hass)
+
         if config_entry_id:
             # Clean up specific entry
             _LOGGER.debug("Cleaning up specific entry: %s", config_entry_id)
-            entry_data = hass.data.get(DOMAIN, {}).get(config_entry_id)
-            if entry_data:
+            entry_runtime = runtime_map.get(config_entry_id)
+            if entry_runtime:
                 # Get the actual config entry to check if DHCP is enabled
-                config_entry = None
-                for entry in hass.config_entries.async_entries(DOMAIN):
-                    if entry.entry_id == config_entry_id:
-                        config_entry = entry
-                        break
+                config_entry = hass.config_entries.async_get_entry(config_entry_id)
 
                 if config_entry:
                     dhcp_enabled = config_entry.options.get(
@@ -51,12 +49,7 @@ async def async_register_services(hass: HomeAssistant):
                     )
                     _LOGGER.debug("Config entry options: %s", config_entry.options)
 
-                _LOGGER.debug(
-                    "Found entry data for %s: %s",
-                    config_entry_id,
-                    list(entry_data.keys()),
-                )
-                dhcp_coordinator = entry_data.get("coordinators", {}).get("dhcp")
+                dhcp_coordinator = entry_runtime.coordinators.get("dhcp")
                 _LOGGER.debug(
                     "DHCP coordinator status for %s: coordinator=%s, has_data=%s",
                     config_entry_id,
@@ -103,24 +96,18 @@ async def async_register_services(hass: HomeAssistant):
                 _LOGGER.error(
                     "Config entry %s not found. Available entries: %s",
                     config_entry_id,
-                    list(hass.data.get(DOMAIN, {}).keys()),
+                    list(runtime_map),
                 )
         else:
             # Clean up all entries
-            domain_data = hass.data.get(DOMAIN, {})
             _LOGGER.debug(
                 "Cleaning up all entries. Found %d total entries: %s",
-                len(domain_data),
-                list(domain_data.keys()),
+                len(runtime_map),
+                list(runtime_map),
             )
             cleaned_entries = 0
-            for entry_id, entry_data in domain_data.items():
-                _LOGGER.debug(
-                    "Processing entry %s with data keys: %s",
-                    entry_id,
-                    list(entry_data.keys()),
-                )
-                dhcp_coordinator = entry_data.get("coordinators", {}).get("dhcp")
+            for entry_id, entry_runtime in runtime_map.items():
+                dhcp_coordinator = entry_runtime.coordinators.get("dhcp")
                 _LOGGER.debug(
                     "DHCP coordinator status for %s: coordinator=%s, has_data=%s",
                     entry_id,
@@ -165,7 +152,7 @@ async def async_register_services(hass: HomeAssistant):
             _LOGGER.debug(
                 "Cleanup completed for %d out of %d entries",
                 cleaned_entries,
-                len(domain_data),
+                len(runtime_map),
             )
 
     async def handle_get_dhcp_leases(call):
@@ -182,16 +169,16 @@ async def async_register_services(hass: HomeAssistant):
         )
 
         # Find the appropriate config entry
+        runtime_map = async_loaded_runtime_data(hass)
         target_entry_id = config_entry_id
         if not target_entry_id:
             # Use the first available entry if none specified
-            domain_data = hass.data.get(DOMAIN, {})
             _LOGGER.debug(
                 "No config_entry_id specified, searching available entries: %s",
-                list(domain_data.keys()),
+                list(runtime_map),
             )
-            if domain_data:
-                target_entry_id = next(iter(domain_data.keys()))
+            if runtime_map:
+                target_entry_id = next(iter(runtime_map))
                 _LOGGER.debug("Using first available entry: %s", target_entry_id)
 
         if not target_entry_id:
@@ -199,19 +186,17 @@ async def async_register_services(hass: HomeAssistant):
             return
 
         _LOGGER.debug("Using target entry ID: %s", target_entry_id)
-        entry_data = hass.data.get(DOMAIN, {}).get(target_entry_id)
-        if not entry_data:
+        entry_runtime = runtime_map.get(target_entry_id)
+        if not entry_runtime:
             _LOGGER.error(
                 "Config entry %s not found. Available entries: %s",
                 target_entry_id,
-                list(hass.data.get(DOMAIN, {}).keys()),
+                list(runtime_map),
             )
             return
 
-        _LOGGER.debug("Found entry data with keys: %s", list(entry_data.keys()))
-
         # Get the API instance
-        api = entry_data.get("api")
+        api = entry_runtime.api
         if not api:
             _LOGGER.error("No API instance found for entry %s", target_entry_id)
             return

@@ -7,9 +7,9 @@ from unittest.mock import AsyncMock, patch
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from technitiumdns import InvalidTokenError, TransportError
 
 from custom_components.technitiumdns.const import DOMAIN
+from technitiumdns import InvalidTokenError, TransportError
 
 USER_INPUT = {
     "api_url": "http://dns.local:5380",
