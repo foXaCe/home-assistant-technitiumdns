@@ -67,5 +67,35 @@ def mock_api(stats_response) -> MagicMock:
     api.user.check_for_update = AsyncMock(return_value=update)
 
     api.dhcp.leases_list = AsyncMock(return_value=[])
-    api.settings.get = AsyncMock(return_value=MagicMock())
+
+    settings = MagicMock()
+    settings.enable_blocking = True
+    api.settings.get = AsyncMock(return_value=settings)
+    api.settings.set = AsyncMock(return_value=settings)
+    api.settings.temporary_disable_blocking = AsyncMock(return_value=settings)
     return api
+
+
+@pytest.fixture
+def config_entry():
+    """A configured MockConfigEntry at the current schema version (DHCP off)."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.technitiumdns.config_flow import CONFIG_VERSION
+    from custom_components.technitiumdns.const import DOMAIN
+
+    return MockConfigEntry(
+        domain=DOMAIN,
+        title="Home DNS",
+        version=CONFIG_VERSION,
+        data={
+            "api_url": "http://dns.local:5380",
+            "token": "s3cr3t",
+            "check_ssl": True,
+            "cluster_mode": False,
+            "server_name": "Home DNS",
+            "username": "admin",
+            "stats_duration": "last_hour",
+        },
+        options={"enable_dhcp_tracking": False},
+    )
