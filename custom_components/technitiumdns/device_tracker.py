@@ -34,7 +34,6 @@ from .utils import (
     normalize_mac_address,
 )
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -203,11 +202,11 @@ class TechnitiumDHCPDeviceTracker(CoordinatorEntity, ScannerEntity):
         if self._mac_address:
             normalized_mac = normalize_mac_address(self._mac_address)
             mac_clean = normalized_mac.replace(":", "").lower()
-            return f"{DOMAIN}_device_tracker_{mac_clean}"
+            return f"{self._entry_id}_device_tracker_{mac_clean}"
 
         # Fallback to IP if no MAC available (shouldn't happen in DHCP context)
         ip_clean = self._lease_data.get("ip_address", "").replace(".", "_")
-        return f"{DOMAIN}_device_tracker_ip_{ip_clean}"
+        return f"{self._entry_id}_device_tracker_ip_{ip_clean}"
 
     @property
     def source_type(self):

@@ -1,23 +1,27 @@
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import timedelta
 import logging
+from typing import Any
 
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
 )
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.typing import StateType
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CONF_STATS_UPDATE_INTERVAL,
     DEFAULT_STATS_UPDATE_INTERVAL,
     DOMAIN,
-    SENSOR_TYPES,
 )
 from .coordinator import TechnitiumDNSCoordinator
 from .dhcp_sensors import DynamicSensorManager, _create_device_sensors
-from .utils import (
-    server_device_info,
-)
+from .utils import server_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,8 +49,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
         await coordinator.async_config_entry_first_refresh()
 
         sensors = [
-            TechnitiumDNSSensor(coordinator, sensor_type, server_name, entry.entry_id)
-            for sensor_type in SENSOR_TYPES
+            TechnitiumDNSSensor(coordinator, description, server_name, entry.entry_id)
+            for description in SENSOR_DESCRIPTIONS
         ]
         _LOGGER.info("Created %d main DNS statistics sensors", len(sensors))
 
@@ -137,88 +141,113 @@ async def async_unload_entry(hass, entry):
     return True
 
 
+@dataclass(frozen=True, kw_only=True)
+class TechnitiumSensorDescription(SensorEntityDescription):
+    """Describes a TechnitiumDNS statistics sensor."""
+
+    value_fn: Callable[[dict[str, Any]], StateType]
+    attrs_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None
+
+
+def _stat_value(data: dict[str, Any], key: str) -> StateType:
+    value = data.get(key)
+    if isinstance(value, (list, dict)):
+        return len(value)
+    if isinstance(value, str) and len(value) > 255:
+        return value[:255]
+    return value
+
+
+def _top_table(data: dict[str, Any], key: str, label: str) -> dict[str, Any]:
+    return {
+        f"{key}_table": [
+            {label: item.get("name", "Unknown"), "Hits": item.get("hits", 0)}
+            for item in data.get(key, [])
+        ]
+    }
+
+
+_MEASUREMENT_KEYS = (
+    "queries",
+    "blocked_queries",
+    "clients",
+    "no_error",
+    "server_failure",
+    "nx_domain",
+    "refused",
+    "authoritative",
+    "recursive",
+    "cached",
+    "dropped",
+    "zones",
+    "cached_entries",
+    "allowed_zones",
+    "blocked_zones",
+    "allow_list_zones",
+    "block_list_zones",
+)
+_TOP_KEYS = {
+    "top_clients": "Client",
+    "top_domains": "Domain",
+    "top_blocked_domains": "Blocked Domain",
+}
+
+SENSOR_DESCRIPTIONS: tuple[TechnitiumSensorDescription, ...] = (
+    *(
+        TechnitiumSensorDescription(
+            key=key,
+            translation_key=key,
+            state_class=SensorStateClass.MEASUREMENT,
+            value_fn=lambda data, k=key: _stat_value(data, k),
+        )
+        for key in _MEASUREMENT_KEYS
+    ),
+    TechnitiumSensorDescription(
+        key="update_available",
+        translation_key="update_available",
+        device_class=SensorDeviceClass.ENUM,
+        options=["up_to_date", "available"],
+        value_fn=lambda data: (
+            "available" if data.get("update_available") else "up_to_date"
+        ),
+    ),
+    *(
+        TechnitiumSensorDescription(
+            key=key,
+            translation_key=key,
+            value_fn=lambda data, k=key: _stat_value(data, k),
+            attrs_fn=lambda data, k=key, lbl=label: _top_table(data, k, lbl),
+        )
+        for key, label in _TOP_KEYS.items()
+    ),
+)
+
+
 class TechnitiumDNSSensor(CoordinatorEntity, SensorEntity):
-    """Representation of a TechnitiumDNS sensor."""
+    """Representation of a TechnitiumDNS statistics sensor."""
 
     _attr_has_entity_name = True
+    entity_description: TechnitiumSensorDescription
 
-    def __init__(self, coordinator, sensor_type, server_name, entry_id):
+    def __init__(self, coordinator, description, server_name, entry_id):
         """Initialize the sensor."""
         super().__init__(coordinator)
-        self._sensor_type = sensor_type
+        self.entity_description = description
         self._server_name = server_name
         self._entry_id = entry_id
-        self._attr_name = SENSOR_TYPES[sensor_type]["name"]
-        self._state_class = SENSOR_TYPES[sensor_type].get("state_class", "measurement")
+        self._attr_unique_id = f"{entry_id}_{description.key}"
 
     @property
-    def state_class(self):
-        """Return the state class of the sensor."""
-        return self._state_class
+    def native_value(self) -> StateType:
+        """Return the current value of the sensor."""
+        return self.entity_description.value_fn(self.coordinator.data)
 
     @property
-    def state(self):
-        """Return the state of the sensor."""
-        state_value = self.coordinator.data.get(self._sensor_type)
-        _LOGGER.debug("State value for %s: %s", self._sensor_type, state_value)
-
-        # Ensure the state value is within the allowable length
-        if isinstance(state_value, str) and len(state_value) > 255:
-            _LOGGER.error(
-                "State value for %s exceeds 255 characters", self._sensor_type
-            )
-            return state_value[:255]
-
-        if isinstance(state_value, (list, dict)):
-            state_value = len(state_value)  # Return length if complex
-
-        return state_value
-
-    @property
-    def extra_state_attributes(self):
-        """Return additional attributes in a table-friendly format based on sensor type."""
-        attributes = {
-            "queries": self.coordinator.data.get("queries", 0),
-            "blocked_queries": self.coordinator.data.get("blocked_queries", 0),
-            "clients": self.coordinator.data.get("clients", 0),
-            "update_available": self.coordinator.data.get("update_available", False),
-        }
-
-        if self._sensor_type == "top_clients":
-            attributes["top_clients_table"] = [
-                {"Client": client.get("name", "Unknown"), "Hits": client.get("hits", 0)}
-                for client in self.coordinator.data.get("top_clients", [])
-            ]
-        elif self._sensor_type == "top_domains":
-            attributes["top_domains_table"] = [
-                {"Domain": domain.get("name", "Unknown"), "Hits": domain.get("hits", 0)}
-                for domain in self.coordinator.data.get("top_domains", [])
-            ]
-        elif self._sensor_type == "top_blocked_domains":
-            attributes["top_blocked_domains_table"] = [
-                {
-                    "Blocked Domain": domain.get("name", "Unknown"),
-                    "Hits": domain.get("hits", 0),
-                }
-                for domain in self.coordinator.data.get("top_blocked_domains", [])
-            ]
-
-        return attributes
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return f"{DOMAIN}_dns_stats_{self._sensor_type}_{self._server_name.replace(' ', '_').lower()}"
-
-    @property
-    def available(self):
-        """Return if the sensor is available."""
-        return self.coordinator.last_update_success
-
-    @property
-    def should_poll(self):
-        """No polling needed."""
-        return False
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the top-N table attributes, when applicable."""
+        if self.entity_description.attrs_fn is None:
+            return None
+        return self.entity_description.attrs_fn(self.coordinator.data)
 
     @property
     def device_info(self):

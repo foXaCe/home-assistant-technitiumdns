@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from homeassistant.components.button import ButtonEntity
+
 from .const import AD_BLOCKING_DURATION_OPTIONS, DOMAIN, KEY_BLOCKING_DISABLED_UNTIL
 from .utils import server_device_info
 
@@ -57,9 +58,9 @@ class TechnitiumDNSButton(ButtonEntity):
         self._hass = hass
         self._entry_id = entry_id
         self._server_name = server_name
-        self._attr_name = name
         self._duration = duration
-        self._attr_unique_id = f"{entry_id}_{duration}"
+        self._attr_translation_key = f"disable_blocking_{duration}"
+        self._attr_unique_id = f"{entry_id}_disable_blocking_{duration}"
 
     async def async_press(self) -> None:
         """Handle the button press."""
@@ -75,7 +76,7 @@ class TechnitiumDNSButton(ButtonEntity):
             _LOGGER.info(
                 "Ad blocking disabled for %d minutes on %s (until %s)",
                 self._duration,
-                self._attr_name,
+                self._server_name,
                 until,
             )
 
@@ -100,7 +101,7 @@ class TechnitiumDNSCleanupButton(ButtonEntity):
     def __init__(self, server_name: str, entry_id: str, hass):
         """Initialize the cleanup button."""
         self._server_name = server_name
-        self._attr_name = "Cleanup Devices"
+        self._attr_translation_key = "cleanup_devices"
         self._entry_id = entry_id
         self._hass = hass
         self._attr_unique_id = f"{entry_id}_cleanup_devices"
@@ -114,7 +115,7 @@ class TechnitiumDNSCleanupButton(ButtonEntity):
                 "cleanup_devices",
                 {"config_entry_id": self._entry_id},
             )
-            _LOGGER.info("Manual device cleanup triggered for %s", self._attr_name)
+            _LOGGER.info("Manual device cleanup triggered for %s", self._server_name)
         except Exception as err:
             _LOGGER.error("Failed to trigger device cleanup: %s", err)
 

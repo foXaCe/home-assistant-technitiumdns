@@ -20,6 +20,13 @@
           "token": "API token from the Technitium DNS web console",
           "stats_duration": "Time window for dashboard statistics"
         }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate TechnitiumDNS",
+        "description": "The API token for {name} is no longer valid. Enter a new token to reconnect.",
+        "data": {
+          "token": "[%key:common::config_flow::data::api_key%]"
+        }
       }
     },
     "error": {
@@ -41,6 +48,13 @@
         "last_week": "Last week",
         "last_month": "Last month"
       }
+    },
+    "dhcp_ip_filter_mode": {
+      "options": {
+        "disabled": "No IP filtering",
+        "include": "Include only specified IPs/ranges",
+        "exclude": "Exclude specified IPs/ranges"
+      }
     }
   },
   "options": {
@@ -56,7 +70,7 @@
           "dhcp_stale_threshold": "Staleness Threshold (minutes)",
           "test_dhcp": "Test DHCP Connection"
         },
-        "description": "{dhcp_description}",
+        "description": "Enable DHCP device tracking to monitor devices connected to your Technitium DHCP server. The update interval controls how often device status is checked. Use IP filtering to control which devices are tracked based on their IP addresses.",
         "title": "TechnitiumDNS Options"
       },
       "dhcp_test": {
@@ -70,6 +84,143 @@
     "error": {
       "dhcp_error": "DHCP API returned an error. Check your Technitium DNS server configuration.",
       "dhcp_connection_failed": "Failed to connect to DHCP API. Verify your server URL and token."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "queries": {
+        "name": "Total queries"
+      },
+      "blocked_queries": {
+        "name": "Blocked queries"
+      },
+      "clients": {
+        "name": "Clients"
+      },
+      "update_available": {
+        "name": "Update available",
+        "state": {
+          "up_to_date": "Up to date",
+          "available": "Update available"
+        }
+      },
+      "no_error": {
+        "name": "Total no error"
+      },
+      "server_failure": {
+        "name": "Total server failure"
+      },
+      "nx_domain": {
+        "name": "Total NXDOMAIN"
+      },
+      "refused": {
+        "name": "Total refused"
+      },
+      "authoritative": {
+        "name": "Total authoritative"
+      },
+      "recursive": {
+        "name": "Total recursive"
+      },
+      "cached": {
+        "name": "Total cached"
+      },
+      "dropped": {
+        "name": "Total dropped"
+      },
+      "zones": {
+        "name": "Zones"
+      },
+      "cached_entries": {
+        "name": "Cached entries"
+      },
+      "allowed_zones": {
+        "name": "Allowed zones"
+      },
+      "blocked_zones": {
+        "name": "Blocked zones"
+      },
+      "allow_list_zones": {
+        "name": "Allow list zones"
+      },
+      "block_list_zones": {
+        "name": "Block list zones"
+      },
+      "top_clients": {
+        "name": "Top clients"
+      },
+      "top_domains": {
+        "name": "Top domains"
+      },
+      "top_blocked_domains": {
+        "name": "Top blocked domains"
+      },
+      "dhcp_ip_address": {
+        "name": "IP address"
+      },
+      "dhcp_mac_address": {
+        "name": "MAC address"
+      },
+      "dhcp_hostname": {
+        "name": "Hostname"
+      },
+      "dhcp_lease_obtained": {
+        "name": "Lease obtained"
+      },
+      "dhcp_lease_expires": {
+        "name": "Lease expires"
+      },
+      "dhcp_last_seen": {
+        "name": "Last seen"
+      },
+      "dhcp_is_stale": {
+        "name": "Stale",
+        "state": {
+          "not_stale": "No",
+          "stale": "Yes"
+        }
+      },
+      "dhcp_minutes_since_seen": {
+        "name": "Minutes since seen"
+      },
+      "dhcp_activity_score": {
+        "name": "Activity score"
+      },
+      "dhcp_is_actively_used": {
+        "name": "Actively used",
+        "state": {
+          "inactive": "No",
+          "active": "Yes"
+        }
+      },
+      "dhcp_activity_summary": {
+        "name": "Activity summary"
+      }
+    },
+    "switch": {
+      "ad_blocking": {
+        "name": "Ad blocking"
+      }
+    },
+    "button": {
+      "disable_blocking_5": {
+        "name": "Disable ad blocking for 5 minutes"
+      },
+      "disable_blocking_10": {
+        "name": "Disable ad blocking for 10 minutes"
+      },
+      "disable_blocking_30": {
+        "name": "Disable ad blocking for 30 minutes"
+      },
+      "disable_blocking_60": {
+        "name": "Disable ad blocking for 60 minutes"
+      },
+      "disable_blocking_1440": {
+        "name": "Disable ad blocking for 1 day"
+      },
+      "cleanup_devices": {
+        "name": "Cleanup devices"
+      }
     }
   }
 }

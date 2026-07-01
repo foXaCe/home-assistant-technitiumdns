@@ -30,6 +30,13 @@
           "token": "Jeton d'API généré depuis la console web de Technitium DNS",
           "stats_duration": "Fenêtre temporelle des statistiques du tableau de bord"
         }
+      },
+      "reauth_confirm": {
+        "title": "Ré-authentifier TechnitiumDNS",
+        "description": "Le jeton d'API de {name} n'est plus valide. Saisissez un nouveau jeton pour vous reconnecter.",
+        "data": {
+          "token": "Jeton d'API"
+        }
       }
     }
   },
@@ -40,6 +47,13 @@
         "last_day": "Dernier jour",
         "last_week": "Dernière semaine",
         "last_month": "Dernier mois"
+      }
+    },
+    "dhcp_ip_filter_mode": {
+      "options": {
+        "disabled": "Aucun filtrage IP",
+        "include": "Inclure uniquement les IP/plages spécifiées",
+        "exclude": "Exclure les IP/plages spécifiées"
       }
     }
   },
@@ -59,7 +73,7 @@
           "test_dhcp": "Tester la connexion DHCP",
           "stats_update_interval": "Intervalle de mise à jour des statistiques (secondes)"
         },
-        "description": "Activez le suivi des appareils DHCP pour surveiller les appareils connectés à votre serveur DHCP Technitium. L'analyse intelligente d'activité distingue l'activité réelle de l'utilisateur du trafic automatisé en arrière-plan (NTP, mises à jour, télémétrie) afin d'éliminer les faux positifs.",
+        "description": "Activez le suivi des appareils DHCP pour surveiller les appareils connectés à votre serveur DHCP Technitium. L'intervalle de mise à jour détermine la fréquence de vérification de l'état des appareils. Utilisez le filtrage IP pour contrôler quels appareils sont suivis selon leur adresse IP.",
         "title": "Options TechnitiumDNS"
       },
       "dhcp_test": {
@@ -73,6 +87,143 @@
     "error": {
       "dhcp_error": "L'API DHCP a renvoyé une erreur. Vérifiez la configuration de votre serveur Technitium DNS.",
       "dhcp_connection_failed": "Échec de la connexion à l'API DHCP. Vérifiez l'URL de votre serveur et le jeton."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "queries": {
+        "name": "Total des requêtes"
+      },
+      "blocked_queries": {
+        "name": "Requêtes bloquées"
+      },
+      "clients": {
+        "name": "Clients"
+      },
+      "update_available": {
+        "name": "Mise à jour disponible",
+        "state": {
+          "up_to_date": "À jour",
+          "available": "Mise à jour disponible"
+        }
+      },
+      "no_error": {
+        "name": "Total sans erreur"
+      },
+      "server_failure": {
+        "name": "Total échecs serveur"
+      },
+      "nx_domain": {
+        "name": "Total NXDOMAIN"
+      },
+      "refused": {
+        "name": "Total refusées"
+      },
+      "authoritative": {
+        "name": "Total faisant autorité"
+      },
+      "recursive": {
+        "name": "Total récursives"
+      },
+      "cached": {
+        "name": "Total en cache"
+      },
+      "dropped": {
+        "name": "Total rejetées"
+      },
+      "zones": {
+        "name": "Zones"
+      },
+      "cached_entries": {
+        "name": "Entrées en cache"
+      },
+      "allowed_zones": {
+        "name": "Zones autorisées"
+      },
+      "blocked_zones": {
+        "name": "Zones bloquées"
+      },
+      "allow_list_zones": {
+        "name": "Zones des listes d'autorisation"
+      },
+      "block_list_zones": {
+        "name": "Zones des listes de blocage"
+      },
+      "top_clients": {
+        "name": "Principaux clients"
+      },
+      "top_domains": {
+        "name": "Principaux domaines"
+      },
+      "top_blocked_domains": {
+        "name": "Principaux domaines bloqués"
+      },
+      "dhcp_ip_address": {
+        "name": "Adresse IP"
+      },
+      "dhcp_mac_address": {
+        "name": "Adresse MAC"
+      },
+      "dhcp_hostname": {
+        "name": "Nom d'hôte"
+      },
+      "dhcp_lease_obtained": {
+        "name": "Bail obtenu"
+      },
+      "dhcp_lease_expires": {
+        "name": "Expiration du bail"
+      },
+      "dhcp_last_seen": {
+        "name": "Dernière détection"
+      },
+      "dhcp_is_stale": {
+        "name": "Obsolète",
+        "state": {
+          "not_stale": "Non",
+          "stale": "Oui"
+        }
+      },
+      "dhcp_minutes_since_seen": {
+        "name": "Minutes depuis la dernière détection"
+      },
+      "dhcp_activity_score": {
+        "name": "Score d'activité"
+      },
+      "dhcp_is_actively_used": {
+        "name": "Utilisé activement",
+        "state": {
+          "inactive": "Non",
+          "active": "Oui"
+        }
+      },
+      "dhcp_activity_summary": {
+        "name": "Résumé d'activité"
+      }
+    },
+    "switch": {
+      "ad_blocking": {
+        "name": "Blocage des publicités"
+      }
+    },
+    "button": {
+      "disable_blocking_5": {
+        "name": "Désactiver le blocage pendant 5 minutes"
+      },
+      "disable_blocking_10": {
+        "name": "Désactiver le blocage pendant 10 minutes"
+      },
+      "disable_blocking_30": {
+        "name": "Désactiver le blocage pendant 30 minutes"
+      },
+      "disable_blocking_60": {
+        "name": "Désactiver le blocage pendant 60 minutes"
+      },
+      "disable_blocking_1440": {
+        "name": "Désactiver le blocage pendant 1 jour"
+      },
+      "cleanup_devices": {
+        "name": "Nettoyer les appareils"
+      }
     }
   }
 }
