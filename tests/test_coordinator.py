@@ -11,7 +11,9 @@ from custom_components.technitiumdns.coordinator import TechnitiumDNSCoordinator
 
 async def test_stats_update_success(hass: HomeAssistant, mock_api) -> None:
     """A successful refresh exposes the parsed statistics."""
-    coordinator = TechnitiumDNSCoordinator(hass, mock_api, "last_hour", update_interval=60)
+    coordinator = TechnitiumDNSCoordinator(
+        hass, mock_api, "last_hour", update_interval=60
+    )
 
     await coordinator.async_refresh()
 

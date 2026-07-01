@@ -120,9 +120,13 @@ class TechnitiumDNSSwitch(SwitchEntity):
             until = self._get_entry_data().get(KEY_BLOCKING_DISABLED_UNTIL)
             if until and isinstance(until, str):
                 until = dt_util.parse_datetime(until)
-            self._temporary_disable_until = until if self._is_temporarily_disabled() else None
+            self._temporary_disable_until = (
+                until if self._is_temporarily_disabled() else None
+            )
 
-            effective_on = settings.enable_blocking and not self._is_temporarily_disabled()
+            effective_on = (
+                settings.enable_blocking and not self._is_temporarily_disabled()
+            )
             if self._is_on != effective_on:
                 self._is_on = effective_on
                 self.async_write_ha_state()

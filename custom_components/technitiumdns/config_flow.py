@@ -133,7 +133,9 @@ class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
             {
                 vol.Optional(
                     "enable_dhcp_tracking",
-                    default=self.config_entry.options.get("enable_dhcp_tracking", False),
+                    default=self.config_entry.options.get(
+                        "enable_dhcp_tracking", False
+                    ),
                 ): bool,
                 vol.Optional(
                     "dhcp_update_interval",
@@ -147,7 +149,9 @@ class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
                 ): vol.In(STATS_UPDATE_INTERVAL_OPTIONS),
                 vol.Optional(
                     "dhcp_ip_filter_mode",
-                    default=self.config_entry.options.get("dhcp_ip_filter_mode", "disabled"),
+                    default=self.config_entry.options.get(
+                        "dhcp_ip_filter_mode", "disabled"
+                    ),
                 ): vol.In(list(DHCP_IP_FILTER_MODES.keys())),
                 vol.Optional(
                     "dhcp_ip_ranges",
@@ -220,7 +224,9 @@ class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):
             leases = await api.dhcp.leases_list()
 
             if leases:
-                dhcp_results = f"✅ Successfully retrieved {len(leases)} DHCP leases:\n\n"
+                dhcp_results = (
+                    f"✅ Successfully retrieved {len(leases)} DHCP leases:\n\n"
+                )
                 for i, lease in enumerate(leases[:20], 1):
                     dhcp_results += f"Device {i}:\n"
                     dhcp_results += f"  IP: {lease.address or 'N/A'}\n"
