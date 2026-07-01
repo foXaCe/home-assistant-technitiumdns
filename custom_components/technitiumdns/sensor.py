@@ -23,10 +23,13 @@ _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(minutes=1)
 
+
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up TechnitiumDNS sensors: main DNS statistics and device diagnostic sensors."""
     try:
-        _LOGGER.info("Setting up TechnitiumDNS sensor platform for entry %s", entry.entry_id)
+        _LOGGER.info(
+            "Setting up TechnitiumDNS sensor platform for entry %s", entry.entry_id
+        )
         config_entry = hass.data[DOMAIN][entry.entry_id]
         api = config_entry["api"]
         server_name = config_entry["server_name"]
@@ -50,33 +53,52 @@ async def async_setup_entry(hass, entry, async_add_entities):
         # Create device diagnostic sensors if DHCP coordinator is available
         dhcp_coordinator = None
         coordinators = hass.data[DOMAIN][entry.entry_id].get("coordinators", {})
-        _LOGGER.debug("Checking for DHCP coordinator in coordinators: %s", coordinators.keys())
+        _LOGGER.debug(
+            "Checking for DHCP coordinator in coordinators: %s", coordinators.keys()
+        )
 
         if "dhcp" in coordinators:
             dhcp_coordinator = coordinators["dhcp"]
             _LOGGER.info("DHCP coordinator found, creating device diagnostic sensors")
-            _LOGGER.debug("DHCP coordinator data status: has_data=%s, data_length=%s",
-                         dhcp_coordinator.data is not None,
-                         len(dhcp_coordinator.data) if dhcp_coordinator.data else 0)
+            _LOGGER.debug(
+                "DHCP coordinator data status: has_data=%s, data_length=%s",
+                dhcp_coordinator.data is not None,
+                len(dhcp_coordinator.data) if dhcp_coordinator.data else 0,
+            )
 
             # Try to create sensors from current coordinator data
             device_sensors_created = False
             if dhcp_coordinator.data:
-                _LOGGER.info("DHCP coordinator has %d devices, creating diagnostic sensors", len(dhcp_coordinator.data))
-                _LOGGER.debug("DHCP coordinator device MACs: %s", [lease.get("mac_address") for lease in dhcp_coordinator.data])
-                device_sensors = await _create_device_sensors(dhcp_coordinator.data, dhcp_coordinator, server_name, entry.entry_id)
+                _LOGGER.info(
+                    "DHCP coordinator has %d devices, creating diagnostic sensors",
+                    len(dhcp_coordinator.data),
+                )
+                _LOGGER.debug(
+                    "DHCP coordinator device MACs: %s",
+                    [lease.get("mac_address") for lease in dhcp_coordinator.data],
+                )
+                device_sensors = await _create_device_sensors(
+                    dhcp_coordinator.data, dhcp_coordinator, server_name, entry.entry_id
+                )
                 sensors.extend(device_sensors)
                 device_sensors_created = True
-                _LOGGER.info("Created %d device diagnostic sensors from coordinator data", len(device_sensors))
+                _LOGGER.info(
+                    "Created %d device diagnostic sensors from coordinator data",
+                    len(device_sensors),
+                )
             else:
                 _LOGGER.warning("DHCP coordinator.data is: %s", dhcp_coordinator.data)
 
             # If no devices in coordinator data yet, rely on dynamic sensor manager
             # to create sensors when devices are discovered
             if not device_sensors_created:
-                _LOGGER.info("DHCP coordinator has no data yet - sensors will be created dynamically when devices are discovered")
+                _LOGGER.info(
+                    "DHCP coordinator has no data yet - sensors will be created dynamically when devices are discovered"
+                )
         else:
-            _LOGGER.info("DHCP coordinator not available yet, only creating main DNS sensors")
+            _LOGGER.info(
+                "DHCP coordinator not available yet, only creating main DNS sensors"
+            )
 
         _LOGGER.info("Total sensors to register: %d", len(sensors))
         async_add_entities(sensors, True)
@@ -85,7 +107,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
         # Set up dynamic sensor creation if DHCP coordinator is available
         if dhcp_coordinator:
             _LOGGER.info("Setting up dynamic sensor creation for new DHCP devices")
-            sensor_manager = DynamicSensorManager(hass, entry, async_add_entities, dhcp_coordinator, server_name)
+            sensor_manager = DynamicSensorManager(
+                hass, entry, async_add_entities, dhcp_coordinator, server_name
+            )
             await sensor_manager.setup()
 
             # Force immediate sensor creation if coordinator has data but initial creation failed
@@ -98,18 +122,20 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 hass.data[DOMAIN][entry.entry_id]["sensor_manager"] = sensor_manager
 
     except Exception as e:
-        _LOGGER.error("Could not initialize TechnitiumDNS sensor platform: %s", e, exc_info=True)
+        _LOGGER.error(
+            "Could not initialize TechnitiumDNS sensor platform: %s", e, exc_info=True
+        )
         raise ConfigEntryNotReady from e
+
 
 async def async_unload_entry(hass, entry):
     """Unload sensor platform and clean up dynamic sensor manager."""
-    if sensor_manager := hass.data[DOMAIN][entry.entry_id].get(
-        "sensor_manager"
-    ):
+    if sensor_manager := hass.data[DOMAIN][entry.entry_id].get("sensor_manager"):
         sensor_manager.cleanup()
         _LOGGER.info("Dynamic sensor manager cleaned up for entry %s", entry.entry_id)
 
     return True
+
 
 class TechnitiumDNSSensor(CoordinatorEntity, SensorEntity):
     """Representation of a TechnitiumDNS sensor."""
@@ -123,7 +149,7 @@ class TechnitiumDNSSensor(CoordinatorEntity, SensorEntity):
         self._server_name = server_name
         self._entry_id = entry_id
         self._attr_name = SENSOR_TYPES[sensor_type]["name"]
-        self._state_class = SENSOR_TYPES[sensor_type].get('state_class', 'measurement')
+        self._state_class = SENSOR_TYPES[sensor_type].get("state_class", "measurement")
 
     @property
     def state_class(self):
@@ -138,7 +164,9 @@ class TechnitiumDNSSensor(CoordinatorEntity, SensorEntity):
 
         # Ensure the state value is within the allowable length
         if isinstance(state_value, str) and len(state_value) > 255:
-            _LOGGER.error("State value for %s exceeds 255 characters", self._sensor_type)
+            _LOGGER.error(
+                "State value for %s exceeds 255 characters", self._sensor_type
+            )
             return state_value[:255]
 
         if isinstance(state_value, (list, dict)):
@@ -156,19 +184,22 @@ class TechnitiumDNSSensor(CoordinatorEntity, SensorEntity):
             "update_available": self.coordinator.data.get("update_available", False),
         }
 
-        if self._sensor_type == 'top_clients':
+        if self._sensor_type == "top_clients":
             attributes["top_clients_table"] = [
-                {"Client": client.get('name', 'Unknown'), "Hits": client.get('hits', 0)}
+                {"Client": client.get("name", "Unknown"), "Hits": client.get("hits", 0)}
                 for client in self.coordinator.data.get("top_clients", [])
             ]
-        elif self._sensor_type == 'top_domains':
+        elif self._sensor_type == "top_domains":
             attributes["top_domains_table"] = [
-                {"Domain": domain.get('name', 'Unknown'), "Hits": domain.get('hits', 0)}
+                {"Domain": domain.get("name", "Unknown"), "Hits": domain.get("hits", 0)}
                 for domain in self.coordinator.data.get("top_domains", [])
             ]
-        elif self._sensor_type == 'top_blocked_domains':
+        elif self._sensor_type == "top_blocked_domains":
             attributes["top_blocked_domains_table"] = [
-                {"Blocked Domain": domain.get('name', 'Unknown'), "Hits": domain.get('hits', 0)}
+                {
+                    "Blocked Domain": domain.get("name", "Unknown"),
+                    "Hits": domain.get("hits", 0),
+                }
                 for domain in self.coordinator.data.get("top_blocked_domains", [])
             ]
 
@@ -193,5 +224,6 @@ class TechnitiumDNSSensor(CoordinatorEntity, SensorEntity):
     def device_info(self):
         """Return device information for this entity."""
         return server_device_info(self._entry_id, self._server_name)
+
 
 # Diagnostic sensor base class for DHCP devices

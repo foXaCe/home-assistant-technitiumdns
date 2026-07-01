@@ -25,19 +25,22 @@ from .services import async_register_services
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def _async_migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry):
     """Migrate the unique_ids of existing sensors to the new format, handling duplicates."""
     _LOGGER.info("Starting unique_id migration for TechnitiumDNS sensors.")
     entity_registry = er.async_get(hass)
 
-    entities_to_check = er.async_entries_for_config_entry(entity_registry, entry.entry_id)
+    entities_to_check = er.async_entries_for_config_entry(
+        entity_registry, entry.entry_id
+    )
 
     migrated_count = 0
     for entity in entities_to_check:
         # Check if the unique_id matches the OLD format: "Technitiumdns_{type}_{server}"
         if entity.unique_id and entity.unique_id.startswith("Technitiumdns_"):
             try:
-                parts = entity.unique_id.split('_', 2)
+                parts = entity.unique_id.split("_", 2)
                 if len(parts) != 3:
                     continue
 
@@ -55,14 +58,16 @@ async def _async_migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry):
                 if conflicting_entity_id and conflicting_entity_id != entity.entity_id:
                     _LOGGER.warning(
                         "Found conflicting entity %s with the target unique_id. Removing it to resolve duplication.",
-                        conflicting_entity_id
+                        conflicting_entity_id,
                     )
                     entity_registry.async_remove_entity(conflicting_entity_id)
                 # --- END OF NEW LOGIC ---
 
                 _LOGGER.debug(
                     "Migrating unique_id for entity %s from '%s' to '%s'",
-                    entity.entity_id, entity.unique_id, new_unique_id
+                    entity.entity_id,
+                    entity.unique_id,
+                    new_unique_id,
                 )
 
                 # Now, update the original entity's unique_id
@@ -79,6 +84,7 @@ async def _async_migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry):
         _LOGGER.info("Successfully migrated %d sensor unique_ids.", migrated_count)
     else:
         _LOGGER.info("No sensor unique_ids required migration for this entry.")
+
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate an old config entry to a new version."""
@@ -109,15 +115,18 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
         # Add Smart Activity options with defaults
         new_options.setdefault("dhcp_smart_activity", DEFAULT_DHCP_SMART_ACTIVITY)
-        new_options.setdefault("activity_score_threshold", DEFAULT_ACTIVITY_SCORE_THRESHOLD)
-        new_options.setdefault("activity_analysis_window", DEFAULT_ACTIVITY_ANALYSIS_WINDOW)
+        new_options.setdefault(
+            "activity_score_threshold", DEFAULT_ACTIVITY_SCORE_THRESHOLD
+        )
+        new_options.setdefault(
+            "activity_analysis_window", DEFAULT_ACTIVITY_ANALYSIS_WINDOW
+        )
 
         # Update the config entry with new data, options, and version
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version=2
         )
         _LOGGER.info("Successfully migrated config entry to version 2.")
-
 
     # --- Migration from version 2 to 3 ---
     # This handles users who were on 2.4.0 and need the unique_id fix.
@@ -134,17 +143,19 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     if config_entry.version == 3:
         new_data = {**config_entry.data}
         new_data.setdefault("cluster_mode", False)
-        hass.config_entries.async_update_entry(
-            config_entry, data=new_data, version=4
-        )
+        hass.config_entries.async_update_entry(config_entry, data=new_data, version=4)
         _LOGGER.info("Successfully migrated config entry to version 4.")
 
     return True
 
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up TechnitiumDNS from a config entry."""
     if entry.version < CONFIG_VERSION and not await async_migrate_entry(hass, entry):
-        _LOGGER.error("Migration failed for config entry %s. Cannot setup integration.", entry.title)
+        _LOGGER.error(
+            "Migration failed for config entry %s. Cannot setup integration.",
+            entry.title,
+        )
         return False
     _LOGGER.info("Setting up TechnitiumDNS integration for entry %s", entry.entry_id)
     hass.data.setdefault(DOMAIN, {})
@@ -174,13 +185,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         platforms.append("device_tracker")
         _LOGGER.info("Added device_tracker platform to load list")
 
-
     # Always add sensor platform last so it can access other coordinators
     platforms.append("sensor")
 
     _LOGGER.debug("Options: %s", entry.options)
     _LOGGER.info("Platforms to load: %s", platforms)
-
 
     hass.data[DOMAIN][entry.entry_id] = {
         "api": api,
@@ -213,13 +222,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register cleanup service for manual entity cleanup
     await async_register_services(hass)
 
-    _LOGGER.info("TechnitiumDNS integration setup completed for entry %s", entry.entry_id)
+    _LOGGER.info(
+        "TechnitiumDNS integration setup completed for entry %s", entry.entry_id
+    )
     return True
 
 
 async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle options update."""
     await hass.config_entries.async_reload(entry.entry_id)
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
@@ -239,4 +251,3 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Still try to clean up data even if platform unload failed
         hass.data[DOMAIN].pop(entry.entry_id, None)
         return True
-
