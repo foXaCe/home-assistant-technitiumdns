@@ -40,8 +40,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
         stats_duration = config_entry["stats_duration"]
 
         # Create main DNS statistics coordinator and sensors
-        update_interval = entry.options.get(
-            CONF_STATS_UPDATE_INTERVAL, DEFAULT_STATS_UPDATE_INTERVAL
+        update_interval = int(
+            entry.options.get(
+                CONF_STATS_UPDATE_INTERVAL, DEFAULT_STATS_UPDATE_INTERVAL
+            )
         )
         coordinator = TechnitiumDNSCoordinator(
             hass, api, stats_duration, update_interval=update_interval

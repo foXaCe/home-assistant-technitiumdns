@@ -57,6 +57,41 @@ async def test_options_flow_saves(hass: HomeAssistant, mock_api) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
 
 
+async def test_options_flow_numeric_selectors(hass: HomeAssistant, mock_api) -> None:
+    """Numeric selectors accept, persist and round-trip string values as ints."""
+    entry = await _setup(hass, mock_api)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    with patch(
+        "custom_components.technitiumdns.create_api_client",
+        AsyncMock(return_value=mock_api),
+    ):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                "enable_dhcp_tracking": False,
+                "dhcp_update_interval": "300",
+                "stats_update_interval": "120",
+                "dhcp_ip_filter_mode": "exclude",
+                "dhcp_stale_threshold": "60",
+                "activity_score_threshold": "76",
+                "activity_analysis_window": "120",
+            },
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    opts = entry.options
+    # SelectSelector stores the chosen value as a string...
+    assert opts["dhcp_update_interval"] == "300"
+    assert opts["dhcp_ip_filter_mode"] == "exclude"
+    # ...but every numeric option stays coercible to int for consumers.
+    assert int(opts["stats_update_interval"]) == 120
+    assert int(opts["dhcp_stale_threshold"]) == 60
+    assert int(opts["activity_score_threshold"]) == 76
+    assert int(opts["activity_analysis_window"]) == 120
+
+
 async def test_options_flow_dhcp_test_step(hass: HomeAssistant, mock_api) -> None:
     entry = await _setup(hass, mock_api)
 

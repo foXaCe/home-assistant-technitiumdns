@@ -55,6 +55,54 @@
         "include": "Include only specified IPs/ranges",
         "exclude": "Exclude specified IPs/ranges"
       }
+    },
+    "dhcp_update_interval": {
+      "options": {
+        "30": "30 seconds",
+        "60": "1 minute",
+        "180": "3 minutes",
+        "300": "5 minutes",
+        "600": "10 minutes"
+      }
+    },
+    "stats_update_interval": {
+      "options": {
+        "30": "30 seconds",
+        "60": "1 minute",
+        "120": "2 minutes",
+        "300": "5 minutes"
+      }
+    },
+    "dhcp_stale_threshold": {
+      "options": {
+        "5": "5 minutes",
+        "15": "15 minutes",
+        "30": "30 minutes",
+        "60": "1 hour",
+        "120": "2 hours",
+        "240": "4 hours",
+        "480": "8 hours",
+        "720": "12 hours",
+        "1440": "24 hours"
+      }
+    },
+    "activity_score_threshold": {
+      "options": {
+        "10": "Very low (mostly background)",
+        "33": "Low (some user activity)",
+        "55": "Medium (regular usage)",
+        "76": "High (active usage)",
+        "100": "Very high (heavy usage)"
+      }
+    },
+    "activity_analysis_window": {
+      "options": {
+        "15": "15 minutes",
+        "30": "30 minutes",
+        "60": "1 hour",
+        "120": "2 hours",
+        "240": "4 hours"
+      }
     }
   },
   "options": {

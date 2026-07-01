@@ -55,6 +55,54 @@
         "include": "Inclure uniquement les IP/plages spécifiées",
         "exclude": "Exclure les IP/plages spécifiées"
       }
+    },
+    "dhcp_update_interval": {
+      "options": {
+        "30": "30 secondes",
+        "60": "1 minute",
+        "180": "3 minutes",
+        "300": "5 minutes",
+        "600": "10 minutes"
+      }
+    },
+    "stats_update_interval": {
+      "options": {
+        "30": "30 secondes",
+        "60": "1 minute",
+        "120": "2 minutes",
+        "300": "5 minutes"
+      }
+    },
+    "dhcp_stale_threshold": {
+      "options": {
+        "5": "5 minutes",
+        "15": "15 minutes",
+        "30": "30 minutes",
+        "60": "1 heure",
+        "120": "2 heures",
+        "240": "4 heures",
+        "480": "8 heures",
+        "720": "12 heures",
+        "1440": "24 heures"
+      }
+    },
+    "activity_score_threshold": {
+      "options": {
+        "10": "Très faible (surtout du bruit de fond)",
+        "33": "Faible (activité utilisateur légère)",
+        "55": "Moyen (usage régulier)",
+        "76": "Élevé (usage actif)",
+        "100": "Très élevé (usage intensif)"
+      }
+    },
+    "activity_analysis_window": {
+      "options": {
+        "15": "15 minutes",
+        "30": "30 minutes",
+        "60": "1 heure",
+        "120": "2 heures",
+        "240": "4 heures"
+      }
     }
   },
   "options": {
