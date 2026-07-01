@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+from custom_components.technitiumdns.const import DOMAIN
 from custom_components.technitiumdns.dhcp_sensors import (
     TechnitiumDHCPDeviceActivityScoreSensor,
     TechnitiumDHCPDeviceHostnameSensor,
@@ -76,3 +77,27 @@ async def test_sensor_unavailable_when_device_absent() -> None:
     )
     ip = next(s for s in sensors if isinstance(s, TechnitiumDHCPDeviceIPSensor))
     assert ip.native_value is None
+
+
+async def test_all_diagnostic_sensors_expose_values() -> None:
+    """Every diagnostic sensor exposes identity, value and device_info safely."""
+    sensors = await _create_device_sensors(
+        [_LEASE], _coordinator([_LEASE]), "Home DNS", "entry1"
+    )
+    for sensor in sensors:
+        assert sensor.unique_id
+        assert sensor.name
+        # exercises native_value (+ _get_device_data) and the device_info build
+        _ = sensor.native_value
+        assert (DOMAIN, "technitiumdns_dhcp_device_aabbcc000001") in sensor.device_info[
+            "identifiers"
+        ]
+
+    by_type = {type(s).__name__: s for s in sensors}
+    assert by_type["TechnitiumDHCPDeviceIsStaleSensor"].native_value == "No"
+    assert by_type["TechnitiumDHCPDeviceMinutesSinceSeenSensor"].native_value == 0
+    assert (
+        by_type["TechnitiumDHCPDeviceActivitySummarySensor"].native_value
+        == "Actively used"
+    )
+    assert by_type["TechnitiumDHCPDeviceIsActivelyUsedSensor"].native_value == "Yes"
