@@ -12,5 +12,5 @@
   "issue_tracker": "https://github.com/foXaCe/home-assistant-technitiumdns/issues",
   "loggers": ["technitiumdns"],
   "requirements": ["technitiumdns-api>=0.1.1"],
-  "version": "3.1.1"
+  "version": "3.2.0"
 }

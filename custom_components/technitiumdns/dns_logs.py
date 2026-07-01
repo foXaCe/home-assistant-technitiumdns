@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 import logging
-from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
+
+from homeassistant.util import dt as dt_util
 
 if TYPE_CHECKING:
     from technitiumdns import AsyncClient
@@ -58,7 +60,7 @@ async def test_dns_logs_api(client: AsyncClient) -> dict[str, Any]:
                 }
 
         first = loggers[0]
-        end_time = datetime.utcnow()
+        end_time = dt_util.utcnow().replace(tzinfo=None)
         start_time = end_time - timedelta(hours=1)
 
         page = await client.logs.query(
@@ -132,7 +134,7 @@ async def get_last_seen_for_multiple_ips(
         )
         return {}
 
-    end_time = datetime.utcnow()
+    end_time = dt_util.utcnow().replace(tzinfo=None)
     start_time = end_time - timedelta(hours=hours_back)
 
     base_limit = 2000
@@ -183,7 +185,7 @@ async def get_dns_logs_for_analysis(
         )
         return []
 
-    end_time = datetime.utcnow()
+    end_time = dt_util.utcnow().replace(tzinfo=None)
     start_time = end_time - timedelta(hours=hours_back)
 
     try:
