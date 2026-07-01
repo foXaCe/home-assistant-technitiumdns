@@ -20,6 +20,13 @@
           "token": "API token from the Technitium DNS web console",
           "stats_duration": "Time window for dashboard statistics"
         }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate TechnitiumDNS",
+        "description": "The API token for {name} is no longer valid. Enter a new token to reconnect.",
+        "data": {
+          "token": "[%key:common::config_flow::data::api_key%]"
+        }
       }
     },
     "error": {
@@ -84,7 +91,11 @@
         "name": "Clients"
       },
       "update_available": {
-        "name": "Update available"
+        "name": "Update available",
+        "state": {
+          "up_to_date": "Up to date",
+          "available": "Update available"
+        }
       },
       "no_error": {
         "name": "Total no error"
@@ -136,6 +147,72 @@
       },
       "top_blocked_domains": {
         "name": "Top blocked domains"
+      },
+      "dhcp_ip_address": {
+        "name": "IP address"
+      },
+      "dhcp_mac_address": {
+        "name": "MAC address"
+      },
+      "dhcp_hostname": {
+        "name": "Hostname"
+      },
+      "dhcp_lease_obtained": {
+        "name": "Lease obtained"
+      },
+      "dhcp_lease_expires": {
+        "name": "Lease expires"
+      },
+      "dhcp_last_seen": {
+        "name": "Last seen"
+      },
+      "dhcp_is_stale": {
+        "name": "Stale",
+        "state": {
+          "not_stale": "No",
+          "stale": "Yes"
+        }
+      },
+      "dhcp_minutes_since_seen": {
+        "name": "Minutes since seen"
+      },
+      "dhcp_activity_score": {
+        "name": "Activity score"
+      },
+      "dhcp_is_actively_used": {
+        "name": "Actively used",
+        "state": {
+          "inactive": "No",
+          "active": "Yes"
+        }
+      },
+      "dhcp_activity_summary": {
+        "name": "Activity summary"
+      }
+    },
+    "switch": {
+      "ad_blocking": {
+        "name": "Ad blocking"
+      }
+    },
+    "button": {
+      "disable_blocking_5": {
+        "name": "Disable ad blocking for 5 minutes"
+      },
+      "disable_blocking_10": {
+        "name": "Disable ad blocking for 10 minutes"
+      },
+      "disable_blocking_30": {
+        "name": "Disable ad blocking for 30 minutes"
+      },
+      "disable_blocking_60": {
+        "name": "Disable ad blocking for 60 minutes"
+      },
+      "disable_blocking_1440": {
+        "name": "Disable ad blocking for 1 day"
+      },
+      "cleanup_devices": {
+        "name": "Cleanup devices"
       }
     }
   }

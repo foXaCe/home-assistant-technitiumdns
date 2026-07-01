@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 
-import voluptuous as vol
-from technitiumdns import InvalidTokenError, TransportError
-
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
+import voluptuous as vol
+
+from technitiumdns import InvalidTokenError, TransportError
 
 from .client import create_api_client
 from .const import (
@@ -36,7 +36,7 @@ from .const import (
     STATS_UPDATE_INTERVAL_OPTIONS,
 )
 
-CONFIG_VERSION = 5
+CONFIG_VERSION = 7
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -115,6 +115,58 @@ class TechnitiumDNSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_import(self, user_input):
         """Handle import from config migration."""
         return await self.async_step_user(user_input)
+
+    async def async_step_reauth(self, entry_data):
+        """Handle re-authentication after an invalid token."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input=None):
+        """Prompt for a new API token and validate it."""
+        errors: dict[str, str] = {}
+        reauth_entry = self._get_reauth_entry()
+
+        if user_input is not None:
+            try:
+                api = await create_api_client(
+                    self.hass,
+                    api_url=reauth_entry.data["api_url"],
+                    token=user_input["token"],
+                    check_ssl=reauth_entry.data.get("check_ssl", True),
+                    cluster_mode=reauth_entry.data.get("cluster_mode", False),
+                )
+                await api.dashboard.stats(
+                    type=STATS_DURATION_API.get(
+                        reauth_entry.data["stats_duration"],
+                        reauth_entry.data["stats_duration"],
+                    ),
+                    utc=True,
+                )
+            except InvalidTokenError:
+                errors["base"] = "auth"
+            except TransportError:
+                errors["base"] = "cannot_connect"
+            except Exception:
+                _LOGGER.exception("Unexpected error during reauth")
+                errors["base"] = "unknown"
+            else:
+                return self.async_update_reload_and_abort(
+                    reauth_entry, data_updates={"token": user_input["token"]}
+                )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("token"): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD,
+                        )
+                    ),
+                }
+            ),
+            description_placeholders={"name": reauth_entry.title},
+            errors=errors,
+        )
 
 
 class TechnitiumDNSOptionsFlowHandler(config_entries.OptionsFlow):

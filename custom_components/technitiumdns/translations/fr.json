@@ -30,6 +30,13 @@
           "token": "Jeton d'API généré depuis la console web de Technitium DNS",
           "stats_duration": "Fenêtre temporelle des statistiques du tableau de bord"
         }
+      },
+      "reauth_confirm": {
+        "title": "Ré-authentifier TechnitiumDNS",
+        "description": "Le jeton d'API de {name} n'est plus valide. Saisissez un nouveau jeton pour vous reconnecter.",
+        "data": {
+          "token": "Jeton d'API"
+        }
       }
     }
   },
@@ -87,7 +94,11 @@
         "name": "Clients"
       },
       "update_available": {
-        "name": "Mise à jour disponible"
+        "name": "Mise à jour disponible",
+        "state": {
+          "up_to_date": "À jour",
+          "available": "Mise à jour disponible"
+        }
       },
       "no_error": {
         "name": "Total sans erreur"
@@ -139,6 +150,72 @@
       },
       "top_blocked_domains": {
         "name": "Principaux domaines bloqués"
+      },
+      "dhcp_ip_address": {
+        "name": "Adresse IP"
+      },
+      "dhcp_mac_address": {
+        "name": "Adresse MAC"
+      },
+      "dhcp_hostname": {
+        "name": "Nom d'hôte"
+      },
+      "dhcp_lease_obtained": {
+        "name": "Bail obtenu"
+      },
+      "dhcp_lease_expires": {
+        "name": "Expiration du bail"
+      },
+      "dhcp_last_seen": {
+        "name": "Dernière détection"
+      },
+      "dhcp_is_stale": {
+        "name": "Obsolète",
+        "state": {
+          "not_stale": "Non",
+          "stale": "Oui"
+        }
+      },
+      "dhcp_minutes_since_seen": {
+        "name": "Minutes depuis la dernière détection"
+      },
+      "dhcp_activity_score": {
+        "name": "Score d'activité"
+      },
+      "dhcp_is_actively_used": {
+        "name": "Utilisé activement",
+        "state": {
+          "inactive": "Non",
+          "active": "Oui"
+        }
+      },
+      "dhcp_activity_summary": {
+        "name": "Résumé d'activité"
+      }
+    },
+    "switch": {
+      "ad_blocking": {
+        "name": "Blocage des publicités"
+      }
+    },
+    "button": {
+      "disable_blocking_5": {
+        "name": "Désactiver le blocage pendant 5 minutes"
+      },
+      "disable_blocking_10": {
+        "name": "Désactiver le blocage pendant 10 minutes"
+      },
+      "disable_blocking_30": {
+        "name": "Désactiver le blocage pendant 30 minutes"
+      },
+      "disable_blocking_60": {
+        "name": "Désactiver le blocage pendant 60 minutes"
+      },
+      "disable_blocking_1440": {
+        "name": "Désactiver le blocage pendant 1 jour"
+      },
+      "cleanup_devices": {
+        "name": "Nettoyer les appareils"
       }
     }
   }

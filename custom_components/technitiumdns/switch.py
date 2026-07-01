@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime, timedelta
+import logging
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.event import async_track_time_interval
@@ -40,10 +40,10 @@ class TechnitiumDNSSwitch(SwitchEntity):
         self._hass = hass
         self._entry_id = entry_id
         self._server_name = server_name
-        self._attr_name = name
+        self._attr_translation_key = "ad_blocking"
         self._is_on = False
         self._temporary_disable_until: datetime | None = None
-        self._attr_unique_id = f"{entry_id}_{name}"
+        self._attr_unique_id = f"{entry_id}_ad_blocking"
         self._unsub_poll = None
 
     @property
@@ -144,7 +144,7 @@ class TechnitiumDNSSwitch(SwitchEntity):
                 entry_data[KEY_BLOCKING_DISABLED_UNTIL] = None
             self._temporary_disable_until = None
             self._is_on = True
-            _LOGGER.info("Ad blocking enabled on %s", self._attr_name)
+            _LOGGER.info("Ad blocking enabled on %s", self._server_name)
             self.async_write_ha_state()
         except Exception as err:
             _LOGGER.error("Failed to enable ad blocking: %s", err)
@@ -158,7 +158,7 @@ class TechnitiumDNSSwitch(SwitchEntity):
                 entry_data[KEY_BLOCKING_DISABLED_UNTIL] = None
             self._temporary_disable_until = None
             self._is_on = False
-            _LOGGER.info("Ad blocking disabled on %s", self._attr_name)
+            _LOGGER.info("Ad blocking disabled on %s", self._server_name)
             self.async_write_ha_state()
         except Exception as err:
             _LOGGER.error("Failed to disable ad blocking: %s", err)

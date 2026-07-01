@@ -5,6 +5,7 @@ import logging
 from typing import Any
 
 from homeassistant.components.sensor import (
+    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
@@ -204,7 +205,11 @@ SENSOR_DESCRIPTIONS: tuple[TechnitiumSensorDescription, ...] = (
     TechnitiumSensorDescription(
         key="update_available",
         translation_key="update_available",
-        value_fn=lambda data: data.get("update_available"),
+        device_class=SensorDeviceClass.ENUM,
+        options=["up_to_date", "available"],
+        value_fn=lambda data: (
+            "available" if data.get("update_available") else "up_to_date"
+        ),
     ),
     *(
         TechnitiumSensorDescription(

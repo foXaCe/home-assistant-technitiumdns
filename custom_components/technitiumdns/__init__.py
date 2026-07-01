@@ -7,20 +7,22 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
+
 from technitiumdns import InvalidTokenError, TransportError
 
-from .const import (
-    DOMAIN,
-    DEFAULT_DHCP_LOG_TRACKING,
-    DEFAULT_DHCP_STALE_THRESHOLD,
-    DEFAULT_DHCP_SMART_ACTIVITY,
-    DEFAULT_ACTIVITY_SCORE_THRESHOLD,
-    DEFAULT_ACTIVITY_ANALYSIS_WINDOW,
-)
-from .config_flow import CONFIG_VERSION
 from .client import create_api_client
-from .const import KEY_BLOCKING_DISABLED_UNTIL
+from .config_flow import CONFIG_VERSION
+from .const import (
+    DEFAULT_ACTIVITY_ANALYSIS_WINDOW,
+    DEFAULT_ACTIVITY_SCORE_THRESHOLD,
+    DEFAULT_DHCP_LOG_TRACKING,
+    DEFAULT_DHCP_SMART_ACTIVITY,
+    DEFAULT_DHCP_STALE_THRESHOLD,
+    DOMAIN,
+    KEY_BLOCKING_DISABLED_UNTIL,
+)
 from .services import async_register_services
 
 _LOGGER = logging.getLogger(__name__)
@@ -153,7 +155,83 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         hass.config_entries.async_update_entry(config_entry, version=5)
         _LOGGER.info("Successfully migrated config entry to version 5.")
 
+    # --- Migration from version 5 to 6 ---
+    # Normalise the switch/button unique_ids to translatable keys.
+    if config_entry.version == 5:
+        await _async_migrate_control_unique_ids(hass, config_entry)
+        hass.config_entries.async_update_entry(config_entry, version=6)
+        _LOGGER.info("Successfully migrated config entry to version 6.")
+
+    # --- Migration from version 6 to 7 ---
+    # Normalise DHCP diagnostic-sensor and device-tracker unique_ids to the
+    # {entry_id}_... scheme so they stay unique across multiple config entries.
+    if config_entry.version == 6:
+        await _async_migrate_dhcp_unique_ids(hass, config_entry)
+        hass.config_entries.async_update_entry(config_entry, version=7)
+        _LOGGER.info("Successfully migrated config entry to version 7.")
+
     return True
+
+
+async def _async_migrate_dhcp_unique_ids(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Migrate DHCP sensor and device-tracker unique_ids to the entry-scoped scheme.
+
+    ``{DOMAIN}_dhcp_{mac}_{key}`` -> ``{entry_id}_dhcp_{mac}_{key}`` and
+    ``{DOMAIN}_device_tracker_{x}`` -> ``{entry_id}_device_tracker_{x}``.
+    """
+    registry = er.async_get(hass)
+    dhcp_prefix = f"{DOMAIN}_dhcp_"
+    tracker_prefix = f"{DOMAIN}_device_tracker_"
+    # Legacy internal prefixes that were never actually emitted as unique_ids.
+    skip_prefixes = (f"{DOMAIN}_dhcp_sensor_", f"{DOMAIN}_dhcp_device_")
+
+    for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
+        uid = entity.unique_id or ""
+        if uid.startswith(dhcp_prefix) and not uid.startswith(skip_prefixes):
+            new_uid = f"{entry.entry_id}_dhcp_{uid[len(dhcp_prefix):]}"
+        elif uid.startswith(tracker_prefix):
+            new_uid = f"{entry.entry_id}_device_tracker_{uid[len(tracker_prefix):]}"
+        else:
+            continue
+        if new_uid == uid:
+            continue
+        conflict = registry.async_get_entity_id(entity.domain, DOMAIN, new_uid)
+        if conflict and conflict != entity.entity_id:
+            registry.async_remove(conflict)
+        registry.async_update_entity(entity.entity_id, new_unique_id=new_uid)
+        _LOGGER.debug("Migrated unique_id %s -> %s", uid, new_uid)
+
+
+async def _async_migrate_control_unique_ids(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Migrate switch/button unique_ids to the normalized scheme.
+
+    ``{entry_id}_Enable Ad Blocking`` -> ``{entry_id}_ad_blocking`` and
+    ``{entry_id}_{minutes}`` -> ``{entry_id}_disable_blocking_{minutes}``.
+    """
+    registry = er.async_get(hass)
+    prefix = f"{entry.entry_id}_"
+
+    for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
+        uid = entity.unique_id or ""
+        if not uid.startswith(prefix):
+            continue
+        suffix = uid[len(prefix) :]
+        if suffix == "Enable Ad Blocking":
+            new_suffix = "ad_blocking"
+        elif suffix.isdigit():
+            new_suffix = f"disable_blocking_{suffix}"
+        else:
+            continue
+        new_uid = f"{prefix}{new_suffix}"
+        conflict = registry.async_get_entity_id(entity.domain, DOMAIN, new_uid)
+        if conflict and conflict != entity.entity_id:
+            registry.async_remove(conflict)
+        registry.async_update_entity(entity.entity_id, new_unique_id=new_uid)
+        _LOGGER.debug("Migrated unique_id %s -> %s", uid, new_uid)
 
 
 async def _async_migrate_stats_unique_ids(
