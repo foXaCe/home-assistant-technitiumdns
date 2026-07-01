@@ -88,7 +88,6 @@ class TechnitiumDNSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required("api_url"): selector.TextSelector(
                     selector.TextSelectorConfig(
                         type=selector.TextSelectorType.URL,
-                        placeholder="http://my-dns.example.com:5380",
                     )
                 ),
                 vol.Required("check_ssl", default=True): selector.BooleanSelector(),
@@ -98,16 +97,8 @@ class TechnitiumDNSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         type=selector.TextSelectorType.PASSWORD,
                     )
                 ),
-                vol.Required("server_name"): selector.TextSelector(
-                    selector.TextSelectorConfig(
-                        placeholder="Home DNS",
-                    )
-                ),
-                vol.Required("username"): selector.TextSelector(
-                    selector.TextSelectorConfig(
-                        placeholder="admin",
-                    )
-                ),
+                vol.Required("server_name"): selector.TextSelector(),
+                vol.Required("username"): selector.TextSelector(),
                 vol.Required("stats_duration"): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=STATS_DURATION_OPTIONS,

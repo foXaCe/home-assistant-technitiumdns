@@ -3,12 +3,12 @@
 import ipaddress
 import logging
 from datetime import datetime
-from typing import List, Set
+from typing import Set
 
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
+from .const import DOMAIN, OUI_MANUFACTURERS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -161,34 +161,6 @@ def should_track_ip(ip_address: str, filter_mode: str, ip_ranges_str: str) -> bo
     return True
 
 
-def validate_ip_ranges_config(ip_ranges_str: str) -> tuple[bool, str]:
-    """
-    Validate IP ranges configuration string.
-    
-    Args:
-        ip_ranges_str: String containing IP ranges configuration
-        
-    Returns:
-        Tuple of (is_valid, error_message)
-    """
-    if not ip_ranges_str or not ip_ranges_str.strip():
-        return True, ""
-    
-    try:
-        ip_set = parse_ip_ranges(ip_ranges_str)
-        if not ip_set:
-            return False, "No valid IP addresses found in configuration"
-        
-        # Check for reasonable limits (prevent memory issues)
-        if len(ip_set) > 10000:
-            return False, f"Too many IP addresses ({len(ip_set)}). Maximum 10,000 allowed."
-        
-        return True, f"Configuration valid. {len(ip_set)} IP addresses will be processed."
-        
-    except Exception as e:
-        return False, f"Configuration error: {str(e)}"
-
-
 def parse_timestamp(timestamp_str):
     """Parse a timestamp string to a datetime object.
     
@@ -214,3 +186,27 @@ def parse_timestamp(timestamp_str):
     except (ValueError, TypeError) as e:
         _LOGGER.warning("Failed to parse timestamp '%s': %s", timestamp_str, e)
         return None
+
+
+def manufacturer_from_mac(mac_address: str) -> str:
+    """Return the manufacturer for a MAC address via OUI lookup."""
+    if not mac_address:
+        return "Unknown"
+    mac_prefix = mac_address.replace(":", "").upper()[:6]
+    return OUI_MANUFACTURERS.get(mac_prefix, "Unknown")
+
+
+def model_from_hostname(hostname: str) -> str:
+    """Guess a human-readable device model from its hostname."""
+    host = (hostname or "").lower()
+    if "raspberry" in host or "rpi" in host:
+        return "Raspberry Pi"
+    if "iphone" in host or "ipad" in host:
+        return "iOS Device"
+    if "android" in host:
+        return "Android Device"
+    if "windows" in host or "pc" in host:
+        return "Windows PC"
+    if "mac" in host:
+        return "Mac Computer"
+    return "Network Device"

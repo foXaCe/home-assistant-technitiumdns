@@ -5,7 +5,7 @@ genuine user activity and automated background traffic patterns.
 """
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 import re
 
 from .const import (
@@ -122,68 +122,44 @@ class SmartActivityAnalyzer:
     def _filter_device_logs(self, dns_logs: List[Dict], ip_address: str) -> List[Dict]:
         """Filter DNS logs for a specific device within the analysis window."""
         from datetime import timezone
-        
+
         # Use UTC time for consistent comparison with log timestamps
         cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=self.analysis_window_minutes)
-        
-        # Debug: Log the first few entries to understand structure
-        if ip_address == "192.168.1.200" and dns_logs:
-            _LOGGER.debug("DNS logs structure debug for %s:", ip_address)
-            for i, log in enumerate(dns_logs[:3]):
-                _LOGGER.debug("Log entry %d: %s", i, log)
-                _LOGGER.debug("Client IP field: %s", log.get('clientIpAddress'))
-                _LOGGER.debug("Available keys: %s", list(log.keys()))
-        
+
         device_logs = []
-        total_checked = 0
-        ip_matches = 0
-        time_matches = 0
-        
+
         for log in dns_logs:
-            total_checked += 1
-            
             # Check if log is for this device - try different possible field names
-            client_ip = log.get('clientIpAddress') or log.get('client_ip') or log.get('clientIp') or log.get('ip')
-            
-            if client_ip == ip_address:
-                ip_matches += 1
-                
-                # Check if log is within time window
-                log_time_str = log.get('timestamp') or log.get('time') or log.get('dateTime')
-                if log_time_str:
-                    try:
-                        # Parse timestamp with proper timezone handling
-                        if log_time_str.endswith('Z'):
-                            log_time = datetime.fromisoformat(log_time_str.replace('Z', '+00:00'))
-                        else:
-                            log_time = datetime.fromisoformat(log_time_str)
-                            
-                        # Ensure we're comparing in UTC
-                        if log_time.tzinfo is None:
-                            log_time = log_time.replace(tzinfo=timezone.utc)
-                        
-                        if log_time >= cutoff_time:
-                            device_logs.append(log)
-                            time_matches += 1
-                    except (ValueError, AttributeError) as e:
-                        if ip_address == "192.168.1.200":
-                            _LOGGER.debug("Time parsing error for %s: %s", log_time_str, e)
-                        continue
-        
-        if ip_address == "192.168.1.200":
-            _LOGGER.debug("Filter results for %s: total_logs=%d, ip_matches=%d, time_matches=%d, final_logs=%d", 
-                         ip_address, total_checked, ip_matches, time_matches, len(device_logs))
-            _LOGGER.debug("Analysis cutoff time (UTC): %s, analysis window: %d minutes", 
-                         cutoff_time.isoformat(), self.analysis_window_minutes)
-            
-            # Show sample of time-filtered logs for debugging
-            if device_logs:
-                _LOGGER.debug("Sample device logs found for %s:", ip_address)
-                for i, log in enumerate(device_logs[:3]):
-                    _LOGGER.debug("  Log %d: %s -> %s", i, log.get('timestamp'), log.get('qname'))
-                    
-        return device_logs
-                    
+            client_ip = (
+                log.get("clientIpAddress")
+                or log.get("client_ip")
+                or log.get("clientIp")
+                or log.get("ip")
+            )
+
+            if client_ip != ip_address:
+                continue
+
+            # Check if log is within time window
+            log_time_str = log.get("timestamp") or log.get("time") or log.get("dateTime")
+            if not log_time_str:
+                continue
+            try:
+                # Parse timestamp with proper timezone handling
+                if log_time_str.endswith("Z"):
+                    log_time = datetime.fromisoformat(log_time_str.replace("Z", "+00:00"))
+                else:
+                    log_time = datetime.fromisoformat(log_time_str)
+
+                # Ensure we are comparing in UTC
+                if log_time.tzinfo is None:
+                    log_time = log_time.replace(tzinfo=timezone.utc)
+
+                if log_time >= cutoff_time:
+                    device_logs.append(log)
+            except (ValueError, AttributeError):
+                continue
+
         return device_logs
     
     def _calculate_background_score(self, device_logs: List[Dict]) -> float:

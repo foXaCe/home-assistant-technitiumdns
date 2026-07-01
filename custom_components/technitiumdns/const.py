@@ -33,10 +33,6 @@ AD_BLOCKING_DURATION_OPTIONS = {
 }
 
 # DHCP Device Tracking Options
-CONF_ENABLE_DHCP_TRACKING = "enable_dhcp_tracking"
-CONF_DHCP_UPDATE_INTERVAL = "dhcp_update_interval"
-CONF_DHCP_IP_FILTER_MODE = "dhcp_ip_filter_mode"
-CONF_DHCP_IP_RANGES = "dhcp_ip_ranges"
 
 DHCP_UPDATE_INTERVAL_OPTIONS = [30, 60, 180, 300, 600]  # seconds
 
@@ -352,4 +348,21 @@ QUERY_TYPE_WEIGHTS = {
     'PTR': 0.3,    # Reverse lookup (often automated)
     'SOA': 0.2,    # Zone transfer (automated)
     'NS': 0.2      # Name server lookup (automated)
+}
+
+
+# OUI (first 3 MAC octets, uppercase, no separators) → manufacturer, for DHCP
+# device manufacturer detection. Extend as needed.
+OUI_MANUFACTURERS = {
+    "00215A": "Apple",
+    "3C0754": "Apple",
+    "F0F61C": "Apple",
+    "DC86D8": "Raspberry Pi Foundation",
+    "B827EB": "Raspberry Pi Foundation",
+    "E45F01": "Raspberry Pi Foundation",
+    "00E04C": "Realtek",
+    "EC086B": "Intel",
+    "3417EB": "Intel",
+    "000C29": "VMware",
+    "005056": "VMware",
 }
