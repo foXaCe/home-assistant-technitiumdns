@@ -28,7 +28,7 @@
   "prConcurrentLimit": 12,
   "prHourlyLimit": 0,
   "dependencyDashboard": true,
-  "dependencyDashboardTitle": "📦 Renovate Dependency Dashboard",
+  "dependencyDashboardTitle": "\ud83d\udce6 Renovate Dependency Dashboard",
   "dependencyDashboardLabels": [
     "dependencies",
     "dashboard"
@@ -108,7 +108,7 @@
     },
     {
       "customType": "regex",
-      "description": "Track tools pinned via a `# renovate: datasource=… depName=…` comment",
+      "description": "Track tools pinned via a `# renovate: datasource=\u2026 depName=\u2026` comment",
       "managerFilePatterns": [
         "/(^|/)\\.(github|forgejo)/workflows/[^/]+\\.ya?ml$/",
         "/(^|/)scripts/[^/]+$/",
@@ -228,7 +228,7 @@
       ]
     },
     {
-      "description": "The integration's own runtime dependency — review manually",
+      "description": "The integration's own runtime dependency \u2014 review manually",
       "matchPackageNames": [
         "technitiumdns-api"
       ],
@@ -240,7 +240,7 @@
       "automerge": false
     },
     {
-      "description": "Home Assistant core — review manually, monthly",
+      "description": "Home Assistant core \u2014 review manually, monthly",
       "matchDepNames": [
         "homeassistant",
         "home-assistant"
@@ -257,7 +257,7 @@
       ]
     },
     {
-      "description": "Python runtime version bumps — review manually",
+      "description": "Python runtime version bumps \u2014 review manually",
       "matchDatasources": [
         "python-version"
       ],
@@ -288,6 +288,15 @@
         "/^syrupy/"
       ],
       "groupName": "test stack"
+    },
+    {
+      "description": "Tout ce qui monte se fusionne seul quand la CI est verte (op\u00e9rateur, 2026-10-14)",
+      "matchUpdateTypes": [
+        "minor",
+        "major"
+      ],
+      "automerge": true,
+      "platformAutomerge": true
     }
   ],
   "ignorePaths": [
@@ -297,5 +306,6 @@
     "**/__pycache__/**",
     "**/.tox/**",
     "**/config/**"
-  ]
+  ],
+  "rollbackPrs": false
 }
