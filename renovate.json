@@ -27,12 +27,11 @@
   "rebaseWhen": "auto",
   "prConcurrentLimit": 12,
   "prHourlyLimit": 0,
-  "dependencyDashboard": true,
-  "dependencyDashboardTitle": "📦 Renovate Dependency Dashboard",
-  "dependencyDashboardLabels": [
-    "dependencies",
-    "dashboard"
-  ],
+  "dependencyDashboard": {
+    "enabled": true,
+    "title": "📦 Renovate Dependency Dashboard",
+    "labels": ["dependencies", "dashboard"]
+  },
   "configMigration": true,
   "commitBody": "Signed-off-by: renovate[bot] <bot@renovateapp.com>",
   "vulnerabilityAlerts": {
